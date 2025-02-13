@@ -1,0 +1,15 @@
+= OIDC
+
+Define the OIDC configuration for the application.
+
+
+== Resources
+
+
+link:https://medium.com/@stefannovak96/signing-in-with-google-with-keycloak-bf5166e93d1e[
+Basic OIDC configuration for google]
+
+
+link:https://www.youtube.com/watch?v=RUXY5xqpq0A[
+Keycloak OIDC configuration with google and frontend in react]
+
