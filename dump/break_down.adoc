@@ -1,0 +1,50 @@
+= Breaking down features
+
+== Description
+
+Beep as a lot of feature in a monolithic application. To make it easier to understand and maintain, we can break down the features into smaller parts.
+
+== Break down
+
+=== Servers Features
+
+Server allows user to reunite in communities. We have to manage roles, channels, messages, invitations. 
+
+The following permissions are available within a server and can be assigned to a role:
+
+* `ADMINISTRATOR`: Can perform any action on any subject (channels, webhooks, etc.) in a server.
+* `MANAGE_SERVER`: Can update a server (all CRUD operations except delete).
+* `MANAGE_ROLES`: Can perform all CRUD operations on all roles.
+* `CREATE_INVITATION`: Can create server invites.
+* `MANAGE_CHANNELS`: Can perform all CRUD operations on every channel.
+* `MANAGE_WEBHOOKS`: Can perform all CRUD operations on every webhook.
+* `VIEW_CHANNELS`: Can see the channel and its contents (messages).
+* `SEND_MESSAGES`: Can send messages on the channel.
+* `MANAGE_NICKNAMES`: Can update other users’ nicknames.
+* `CHANGE_NICKNAME`: Can update your own nickname.
+* `MANAGE_MESSAGES`: Can delete other users’ messages.
+* `ATTACH_FILES`: Can upload images and files.
+
+
+By default the basic member is created with the following permissions:
+
+
+
+
+
+=== Authorization
+=== Authentication
+=== Channels
+=== Messages
+=== Vocal
+
+
+== Friends
+As a user of the application:
+
+* I want to create invitation to be friend with another user.
+* I want to accept an invitation to be friend with another user.
+* I want to refuse an invitation to be friend with another user.
+* I want to remove a friend from my friend list.
+
+ 
