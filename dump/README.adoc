@@ -1,0 +1,5 @@
+= Dump folder
+
+This folder is here to dump any files or notes quickly without having to rely or to organize it.
+
+It will also let me try asciidoc syntax.
