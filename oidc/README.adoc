@@ -13,3 +13,5 @@ Basic OIDC configuration for google]
 link:https://www.youtube.com/watch?v=RUXY5xqpq0A[
 Keycloak OIDC configuration with google and frontend in react]
 
+link:https://www.youtube.com/watch?v=GuHN_ZqHExs[
+    React + Keycloak + OIDC + Google]
