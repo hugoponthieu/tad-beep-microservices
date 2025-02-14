@@ -1,0 +1,7 @@
+= Extract knowledge from video
+
+
+
+== link:https://www.youtube.com/watch?v=GuHN_ZqHExs[React + Keycloak + OIDC + Google]
+
+Not using keycloak

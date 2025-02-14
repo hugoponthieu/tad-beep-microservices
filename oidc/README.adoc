@@ -10,8 +10,9 @@ link:https://medium.com/@stefannovak96/signing-in-with-google-with-keycloak-bf51
 Basic OIDC configuration for google]
 
 
-link:https://www.youtube.com/watch?v=RUXY5xqpq0A[
-Keycloak OIDC configuration with google and frontend in react]
-
 link:https://www.youtube.com/watch?v=GuHN_ZqHExs[
     React + Keycloak + OIDC + Google]
+
+link:https://blog.logrocket.com/implement-keycloak-authentication-react/[Implement Keycloak authentication with React]
+
+link:https://chat.mistral.ai/chat/0330f26f-ca00-4f32-a2e6-8b90f5f9c675[Keycloak chat how to manage frontend + auth backend/services]
