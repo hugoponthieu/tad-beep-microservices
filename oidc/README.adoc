@@ -16,3 +16,10 @@ link:https://www.youtube.com/watch?v=GuHN_ZqHExs[
 link:https://blog.logrocket.com/implement-keycloak-authentication-react/[Implement Keycloak authentication with React]
 
 link:https://chat.mistral.ai/chat/0330f26f-ca00-4f32-a2e6-8b90f5f9c675[Keycloak chat how to manage frontend + auth backend/services]
+
+link:https://www.youtube.com/watch?v=x3ux2JM1Bxk[Personalise signin page]
+
+
+== Notes
+
+We can simply use the keycloak in the services to authenticate the user and then use the token to authenticate the user in the frontend.

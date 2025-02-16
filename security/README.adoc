@@ -1,0 +1,34 @@
+= Security 
+
+link:https://www.redhat.com/fr/topics/microservices/what-is-a-service-mesh[What is a service mesh?]
+
+link:https://konghq.com/blog/learning-center/what-is-a-service-mesh[What is an service mesh (kong)?]
+
+link:https://www.youtube.com/watch?v=16fgzklcF7Y[Service mesh with Istio and nana]
+
+link:https://www.youtube.com/watch?v=voAyroDb6xk[Implement service mesh with Istio and nana]
+
+link:https://konghq.com/blog/learning-center/what-is-an-api-gateway/[What is an API Gateway?]
+
+link:https://konghq.com/blog/learning-center/api-gateway-authentication[Api gateway authentication]
+
+== Service mesh
+
+Main concepts:
+A proxy is a sidecar container that intercepts all incoming and outgoing traffic to the service.
+
+It allows to add features like:
+- Load balancing
+- Service discovery
+- Circuit breaking
+- Rate limiting
+- Observability
+
+Always have a health check
+Added retry logic
+Big advantage is that we don't need to implement network logic in the application
+Easily do canary deployments (90 of traffic on the new version of the application and 10 on the old one)
+
+With istio the new service added to the clutser is automatically added to the service mesh
+mTls is a must have in a service mesh
+itio implements gateway
