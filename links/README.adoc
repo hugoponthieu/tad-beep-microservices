@@ -1,0 +1,10 @@
+= Links between questions
+
+Link between:
+
+Q9. How to manage platform security issues
+
+Q5. How can I trace logs and queries?
+
+Q3. Inter microservices communication
+
