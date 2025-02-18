@@ -6,45 +6,82 @@ Beep as a lot of feature in a monolithic application. To make it easier to under
 
 == Break down
 
-=== Servers Features
-
-Server allows user to reunite in communities. We have to manage roles, channels, messages, invitations. 
-
-The following permissions are available within a server and can be assigned to a role:
-
-* `ADMINISTRATOR`: Can perform any action on any subject (channels, webhooks, etc.) in a server.
-* `MANAGE_SERVER`: Can update a server (all CRUD operations except delete).
-* `MANAGE_ROLES`: Can perform all CRUD operations on all roles.
-* `CREATE_INVITATION`: Can create server invites.
-* `MANAGE_CHANNELS`: Can perform all CRUD operations on every channel.
-* `MANAGE_WEBHOOKS`: Can perform all CRUD operations on every webhook.
-* `VIEW_CHANNELS`: Can see the channel and its contents (messages).
-* `SEND_MESSAGES`: Can send messages on the channel.
-* `MANAGE_NICKNAMES`: Can update other users’ nicknames.
-* `CHANGE_NICKNAME`: Can update your own nickname.
-* `MANAGE_MESSAGES`: Can delete other users’ messages.
-* `ATTACH_FILES`: Can upload images and files.
-
-
-By default the basic member is created with the following permissions:
-
-
-
-
-
-=== Authorization
 === Authentication
-=== Channels
-=== Messages
-=== Vocal
+
+If I am not a registered user, I can register to the application using:
+* my email & password
+* my email & Google account
+* the Polytech LDAP
+
+As a user of the application, I can log in using:
+* my email & password
+* my email & Google account
+* the Polytech LDAP
+
+As a user of the application, I can link my account to a Google account or an account that is reference in the Polytech LDAP.
 
 
-== Friends
+As a user of the application, I can log out.
+
+
+
+=== Private Conversation
+As a user of the application: 
+
+* I want to be able to create a private conversation with another user.
+* I want to be able to send messages to another user in a private conversation.
+* I want to be able to delete a private conversation with another user.
+* I want to be able to initiate a call with another user in a private conversation.
+* I want to be able to accept a call from another user in a private conversation.
+* I want to be able to decline a call from another user in a private conversation.
+* I want to be able to end a call with another user in a private conversation.
+
+
+=== Friends
 As a user of the application:
 
-* I want to create invitation to be friend with another user.
+* I want to create invitation so that another user can be my friend.
+* I want to decline invitation to be friend from another user.
 * I want to accept an invitation to be friend with another user.
-* I want to refuse an invitation to be friend with another user.
 * I want to remove a friend from my friend list.
+
+=== Servers Features
+
+A server is an aggregation of channels, roles, and users that will be called members in that context.
+
+Channels are used to separate conversations in a server. They can be text or voice channels.
+
+Roles are used to manage permissions in a server. They can be assigned to a members.
+
+As a user of the application:
+* I want to create a server can be public or private and will be the server owner.
+
+As a server owner, I will have full rights on a server.
+
+Members can have different roles in a server. Their is a role by default called "BasicMember", and the server owner can create new roles.
+
+
+
+
+// * `ADMINISTRATOR`: Can perform any action on any subject (channels, webhooks, etc.) in a server.
+// * `MANAGE_SERVER`: Can update a server (all CRUD operations except delete).
+// * `MANAGE_ROLES`: Can perform all CRUD operations on all roles.
+// * `CREATE_INVITATION`: Can create server invites.
+// * `MANAGE_CHANNELS`: Can perform all CRUD operations on every channel.
+// * `MANAGE_WEBHOOKS`: Can perform all CRUD operations on every webhook.
+// * `VIEW_CHANNELS`: Can see the channel and its contents (messages).
+// * `SEND_MESSAGES`: Can send messages on the channel.
+// * `MANAGE_NICKNAMES`: Can update other users’ nicknames.
+// * `CHANGE_NICKNAME`: Can update your own nickname.
+// * `MANAGE_MESSAGES`: Can delete other users’ messages.
+// * `ATTACH_FILES`: Can upload images and files.
+
+
+
+
+
+
+
+
 
  
