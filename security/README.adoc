@@ -12,6 +12,19 @@ link:https://konghq.com/blog/learning-center/what-is-an-api-gateway/[What is an 
 
 link:https://konghq.com/blog/learning-center/api-gateway-authentication[Api gateway authentication]
 
+link:https://dev.to/aviyel/what-is-authorization-service-and-why-does-it-matter-5d9d[What is an authorization service and why does it matter?]
+
+link:https://chat.mistral.ai/chat/6c436864-81f0-47a3-a8b2-678c2b420df1[Chat with the Mistral AI team]
+
+link:https://istiobyexample.dev/grpc/[gRPC with Istio]
+== OPA
+
+link:https://www.openpolicyagent.org/docs/latest/envoy-tutorial-istio/[Envoy tutorial with Istio to enforce authorization]
+
+link:https://www.openpolicyagent.org/docs/latest/external-data/#flow-1[External data with OPA]
+
+link:https://www.youtube.com/watch?v=jY9clB5b3hY&list=WL&index=2[OPA with Envoy cncf]
+
 == Service mesh
 
 Main concepts:

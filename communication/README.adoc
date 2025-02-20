@@ -1,3 +1,25 @@
-
+= Commication
 
 link:https://adityagoel123.medium.com/introduction-to-grpcs-d6010241c5[Simple & cleer explanation of gRPC]
+
+link:https://medium.com/design-microservices-architecture-with-patterns/microservices-communications-f319f8d76b71[Microservices Communications]
+
+link:https://grpc.io/docs/guides/metadata/#be-aware[Metadata in gRPC]
+
+== State of the art
+
+Many protocols are used today to communicate between different services over different types of networks. Here are some of them:
+
+* Http
+* GRPC
+* Brokers (RabbitMQ, Kafka, etc.)
+* Websockets
+
+These protocols can be implmented in different ways, and they have different advantages and disadvantages. Async communication, sync communication, and event-driven communication.
+
+When a event is sent a central serviec must dispatch events.
+
+The communication with the client will be done with HTTP and Websockets.
+and the communication between the services will be done with GRPC.
+
+Wasm to consum the API in order to have the same bindings
