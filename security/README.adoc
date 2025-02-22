@@ -17,6 +17,8 @@ link:https://dev.to/aviyel/what-is-authorization-service-and-why-does-it-matter-
 link:https://chat.mistral.ai/chat/6c436864-81f0-47a3-a8b2-678c2b420df1[Chat with the Mistral AI team]
 
 link:https://istiobyexample.dev/grpc/[gRPC with Istio]
+
+link:https://istio.io/latest/docs/setup/in stall/helm/[Install Istio with Helm]
 == OPA
 
 link:https://www.openpolicyagent.org/docs/latest/envoy-tutorial-istio/[Envoy tutorial with Istio to enforce authorization]
@@ -45,3 +47,37 @@ Easily do canary deployments (90 of traffic on the new version of the applicatio
 With istio the new service added to the clutser is automatically added to the service mesh
 mTls is a must have in a service mesh
 itio implements gateway
+
+
+
+== How do I manage the authentication system with an OIDC?
+
+There are severals authentication protocols like:
+- OAuth2
+- OIDC
+- SAML
+- LDAP
+- Kerberos 
+
+These are normally used to authenticate users in a system. We will try to choose wisely in order. To help us with that we will try to enumerate the requirements of the system.
+As any system needs
+
+== Implications of Authentication in a Microservices Application
+
+Authentication in a microservices application has several implications:
+
+1. **Decentralized Authentication**: Each microservice may need to handle authentication independently, which can lead to inconsistencies and increased complexity. A centralized authentication service or gateway can help manage this.
+
+2. **Token Management**: Microservices often rely on tokens (e.g., JWT) for authentication. Proper token management, including issuance, validation, and expiration, is crucial to ensure security.
+
+3. **Inter-Service Communication**: When microservices communicate with each other, they need to authenticate requests. This can be achieved using mutual TLS (mTLS) or token-based authentication.
+
+4. **Scalability**: Authentication mechanisms must be scalable to handle a large number of requests. This includes efficient token validation and minimizing the performance impact on microservices.
+
+5. **Security**: Ensuring secure transmission of authentication credentials and tokens is essential. This includes using HTTPS, secure storage of secrets, and regular security audits.
+
+6. **User Experience**: A seamless authentication experience is important for users. Single Sign-On (SSO) can help provide a unified authentication experience across multiple microservices.
+
+7. **Compliance**: Adhering to regulatory requirements (e.g., GDPR, HIPAA) for authentication and user data management is critical in many industries.
+
+By carefully considering these implications, you can design a robust and secure authentication system for your microservices application.

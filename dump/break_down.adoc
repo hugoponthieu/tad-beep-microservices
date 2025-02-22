@@ -8,16 +8,6 @@ Beep as a lot of feature in a monolithic application. To make it easier to under
 
 === Authentication
 
-If I am not a registered user, I can register to the application using:
-* my email & password
-* my email & Google account
-* the Polytech LDAP
-
-As a user of the application, I can log in using:
-* my email & password
-* my email & Google account
-* the Polytech LDAP
-
 As a user of the application, I can link my account to a Google account or an account that is reference in the Polytech LDAP.
 
 
@@ -53,35 +43,76 @@ Channels are used to separate conversations in a server. They can be text or voi
 
 Roles are used to manage permissions in a server. They can be assigned to a members.
 
+Members can have different roles in a server. Their is a role by default called "BasicMember", and they can also be created.
+
+Serveral permissions can be granted to roles:
+
+* `ADMINISTRATOR`: Can perform any action on any subject (channels, webhooks, etc.) in a server.
+* `MANAGE_SERVER`: Can update a server (all CRUD operations except delete).
+* `MANAGE_ROLES`: Can perform all CRUD operations on all roles.
+* `CREATE_INVITATION`: Can create server invites.
+* `MANAGE_CHANNELS`: Can perform all CRUD operations on every channel.
+* `MANAGE_WEBHOOKS`: Can perform all CRUD operations on every webhook.
+* `VIEW_CHANNELS`: Can see the channel and its contents (messages).
+* `SEND_MESSAGES`: Can send messages on the channel.
+* `MANAGE_NICKNAMES`: Can update other users’ nicknames.
+* `CHANGE_NICKNAME`: Can update your own nickname.
+* `MANAGE_MESSAGES`: Can delete other users’ messages.
+* `ATTACH_FILES`: Can upload images and files.
+
+A role can have multiple permissions. A member can have multiple roles in the same server.  
+
+
 As a user of the application:
-* I want to create a server can be public or private and will be the server owner.
 
-As a server owner, I will have full rights on a server.
+* I want to be able to create a server.
+* I want to be able to update a server.
+* I want to be able to delete a server.
+* I want to be able to list all the servers I am a member of.
+* I want to be able to list all the servers I own.
+* I want to be able to join a server.
+* I want to be able to leave a server.
+* I want to be able to create a role in a server.
+* I want to be able to update a role in a server.
+* I want to be able to delete a role in a server.
+* I want to be able to list all the roles in a server.
+* I want to be able to add a role to a member in a server.
+* I want to be able to remove a role to a member in a server.
+* I want to be able to list all the members in a server.
+* I want to be able to list all the roles of a member in a server.
+* I want to be able to list all the servers of a member.
+* I want to be able to list all the channels of a server.
+* I want to be able to create a channel in a server.
+* I want to be able to update a channel in a server.
+* I want to be able to delete a channel in a server.
+* I want to be able to list all the messages of a channel.
+* I want to be able to send a message in a channel.
+* I want to be able to delete a message in a channel.
+* I want to be able to list all the roles of a member in a server.
+* I want to be able to list all the webhooks of a server.
+* I want to be able to create a webhook in a server.
+* I want to be able to update a webhook in a server.
+* I want to be able to delete a webhook in a server.
+* I want to be able to list all the permissions of a role in a server.
+* I want to be able to add a permission to a role in a server.
+* I want to be able to remove a permission to a role in a server.
 
-Members can have different roles in a server. Their is a role by default called "BasicMember", and the server owner can create new roles.
+=== Global Roles
 
+A role is not necesseraliy linked to a server. It can be a global role. I would allow to have administator role that can perform any action on any subject (channels, webhooks, etc.) in the application. 
 
+Roles would be:
 
+- ApplicationAdministrator
+- UserAdministrator
+- ServerAdministrator
 
-// * `ADMINISTRATOR`: Can perform any action on any subject (channels, webhooks, etc.) in a server.
-// * `MANAGE_SERVER`: Can update a server (all CRUD operations except delete).
-// * `MANAGE_ROLES`: Can perform all CRUD operations on all roles.
-// * `CREATE_INVITATION`: Can create server invites.
-// * `MANAGE_CHANNELS`: Can perform all CRUD operations on every channel.
-// * `MANAGE_WEBHOOKS`: Can perform all CRUD operations on every webhook.
-// * `VIEW_CHANNELS`: Can see the channel and its contents (messages).
-// * `SEND_MESSAGES`: Can send messages on the channel.
-// * `MANAGE_NICKNAMES`: Can update other users’ nicknames.
-// * `CHANGE_NICKNAME`: Can update your own nickname.
-// * `MANAGE_MESSAGES`: Can delete other users’ messages.
-// * `ATTACH_FILES`: Can upload images and files.
+ApplicationAdministrator can perform any action on any subject (channels, webhooks, etc.) in the application. It implies that he will be inherit from all the abilities of the other roles.
 
+== Neighborhood
 
+As we saw some functionalities are related to each other. We can regroup them in functional parts. We will increment the application by adding these functionalities one by one from the less dependant to the most dependant.
+We can extract from the use cases some entities that will be used in the application.
 
+First of all, the base of the application are the messages as the users will communicate with each other. We can start by implementing the messages and the private conversation. Then we can implement the friends functionalities. Finally, we can implement the servers functionalities.
 
-
-
-
-
-
- 
