@@ -19,6 +19,7 @@ link:https://chat.mistral.ai/chat/6c436864-81f0-47a3-a8b2-678c2b420df1[Chat with
 link:https://istiobyexample.dev/grpc/[gRPC with Istio]
 
 link:https://istio.io/latest/docs/setup/in stall/helm/[Install Istio with Helm]
+
 == OPA
 
 link:https://www.openpolicyagent.org/docs/latest/envoy-tutorial-istio/[Envoy tutorial with Istio to enforce authorization]
@@ -81,3 +82,55 @@ Authentication in a microservices application has several implications:
 7. **Compliance**: Adhering to regulatory requirements (e.g., GDPR, HIPAA) for authentication and user data management is critical in many industries.
 
 By carefully considering these implications, you can design a robust and secure authentication system for your microservices application.
+
+
+=== Authorization
+
+Authorization is the process of determining what actions a user is allowed to perform within a system. It involves enforcing access control policies based on the user's identity, roles, and permissions. 
+
+In the case of beep we will need to authorize the user at different levels and therefore we will need fine grained authorization.
+A user can endorse different global roles such as:
+
+- ApplicationAdministrator
+- UserAdministrator
+- ServerAdministrator
+
+Also, with the right permission users will be able to create role in a server.
+Those role will be linked to permissions to perform different actions on the resouces of the server (ex: Members, Channels ...).
+
+This service will be called each time a user wants to perform an on a resource across the application. We need a reliable service that will allow to be called from any service in the application.
+
+Different project could be useful and could implements different authorization policies.
+
+Few technologies can help us to implement the authorization service:
+
+- OPA
+- Keycloak
+- Permify
+- Casbin
+
+== Keycloak
+Keycloak provide a complex authorization system that can be used to manage the authorization of the user in the application. For exemple we can define a role that can perform any action on any subject (channels, webhooks, etc.) in the application.
+
+== OPA
+OPA is a general-purpose policy engine that can be used to enforce fine-grained authorization policies in microservices applications. 
+It can be integrated with Istio to enforce access control based on attributes of the request.
+
+== Permify
+Permify is a permission management system that can be used to define and enforce access control policies in microservices applications.
+It provides a flexible and scalable solution for managing permissions and roles.
+
+You can define entities, relation and schema to manage the permissions of the user in the application.
+You can interact with the api using Grpc or Rest with Go or NodeJs.
+
+Drawbacks:
+- Having to maintain the schema of the entities
+- Having to maintain the relation between the entities
+
+
+== Casbin
+Casbin is a powerful and efficient open-source access control library for Golang projects. It supports various access control models, including RBAC, ABAC, and PBAC, and can be easily integrated into microservices applications.
+
+
+.Create a message in a channel of a server
+image::sequence_auth.png[]

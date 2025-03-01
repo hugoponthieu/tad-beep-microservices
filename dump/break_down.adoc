@@ -6,13 +6,22 @@ Beep as a lot of feature in a monolithic application. To make it easier to under
 
 == Break down
 
+=== Profile
+
+As a user of the application, I can create a profile with the following information:
+
+* First name
+* Last name
+* Email
+* Phone number
+* Profile picture
+* Status
+* About
+
 === Authentication
 
 As a user of the application, I can link my account to a Google account or an account that is reference in the Polytech LDAP.
-
-
 As a user of the application, I can log out.
-
 
 
 === Private Conversation
@@ -25,7 +34,7 @@ As a user of the application:
 * I want to be able to accept a call from another user in a private conversation.
 * I want to be able to decline a call from another user in a private conversation.
 * I want to be able to end a call with another user in a private conversation.
-
+* I want to be able to search thrgouh the entire messages to find a message based on a keyword.
 
 === Friends
 As a user of the application:
@@ -114,5 +123,22 @@ ApplicationAdministrator can perform any action on any subject (channels, webhoo
 As we saw some functionalities are related to each other. We can regroup them in functional parts. We will increment the application by adding these functionalities one by one from the less dependant to the most dependant.
 We can extract from the use cases some entities that will be used in the application.
 
-First of all, the base of the application are the messages as the users will communicate with each other. We can start by implementing the messages and the private conversation. Then we can implement the friends functionalities. Finally, we can implement the servers functionalities.
+First of all, any person that want to access the application needs to be registered. We will need to have its profile information and the global permission. By default he has no role assigned.
+This service should be reachable from anywhere in the application in order to acknowledge the user's permission.
 
+=== Authorization
+
+We will need to enforce the authorization of the user. We will need to have a service that will check if the user has the permission to perform an action. This service will be used in the whole application.
+
+=== Communication
+
+The communication will regroup anything that allow users to communicate with each other. 
+Basically any message or vocal communication will be linked to a channel of the application.
+Those channel can be assigned to server but in the case of private conversation users will have their own channel.
+
+A service will be dedicated to messages. In order to validate 
+
+
+=== Server
+
+As we saw in the use cases, a server will regroup users and channels. The role associated to permission will allow manage the server entities.
