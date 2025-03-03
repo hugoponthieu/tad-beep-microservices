@@ -142,3 +142,20 @@ A service will be dedicated to messages. In order to validate
 === Server
 
 As we saw in the use cases, a server will regroup users and channels. The role associated to permission will allow manage the server entities.
+
+
+
+Services:
+
+- Users /
+- Members /
+- Roles /
+- Authorization /
+- Authentication /
+- Servers /
+- Channels /
+- Messages /
+- Webhooks /
+
+.Overview of the application
+image::beep-application_diagramme.jpg[]

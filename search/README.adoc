@@ -2,3 +2,33 @@
 
 link:https://www.elastic.co/guide/en/elasticsearch/reference/current/es-postgresql-connector-client-tutorial.html[
     ElasticSearch Postgres Connector]
+
+link:https://signoz.io/blog/elasticsearch-vs-mongodb/[ElasticSearch vs MongoDB]
+
+
+== Engine
+
+When deciding between MongoDB and Elasticsearch for implementing a search engine in a Discord-like application, consider the following:
+
+- **Elasticsearch** is optimized for full-text search and analytics. It provides powerful search capabilities, including complex queries, filtering, and aggregations. It is well-suited for applications where search performance and relevance are critical.
+
+- **MongoDB** is a NoSQL database that offers flexible schema design and is optimized for high write throughput. While it has some search capabilities, it is not as powerful or efficient as Elasticsearch for full-text search and complex queries.
+
+
+- **Parade DB** is a new database that is designed to be a general-purpose database with built-in search capabilities. 
+It aims to combine the flexibility of MongoDB with the search capabilities of Elasticsearch.
+It is still in the early stages of development but could be a promising option for applications that require both search and general-purpose database functionality.
+
+
+In summary, if your primary requirement is advanced search functionality, Elasticsearch is the better choice. If you need a more general-purpose database with some search capabilities, MongoDB might be sufficient.
+
+
+== Parade DB
+
+It seems to be the easiest and most powerful engine for full text search implementation. As it well documented and maintained it is a suitable choice for the project. 
+Futhermore the we could extend this search engine by using hybrid search.
+
+
+Draw back: 
+No integration in languages
+

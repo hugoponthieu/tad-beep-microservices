@@ -19,7 +19,17 @@ link:https://chat.mistral.ai/chat/0330f26f-ca00-4f32-a2e6-8b90f5f9c675[Keycloak 
 
 link:https://www.youtube.com/watch?v=x3ux2JM1Bxk[Personalise signin page]
 
+link:https://www.youtube.com/watch?v=_iiOOxIDrGA[Component diagram]
+
 
 == Notes
 
 We can simply use the keycloak in the services to authenticate the user and then use the token to authenticate the user in the frontend.
+
+== Summary
+
+This part concern the implementation of an oidc service. This mechanism will allow us to authenticate the user within the whole system.
+
+
+As we will use keycloak to manage the authentication, we will need to configure the oidc service to use the keycloak server.
+The service will be used to handle user authentication and authorization. It will ensure that only authenticated users can access certain parts of the application and that user data is securely managed. The OIDC service will interact with the Keycloak server to validate tokens and manage user sessions.
