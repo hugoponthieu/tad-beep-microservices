@@ -1,0 +1,24 @@
+= Title of document
+Hugo Ponthieu <hugopont08@gmail.com>
+:description: Description of the document
+:sectnums:
+:toc: 
+
+
+[abstract]
+== Abstract
+
+This is the abstract of the document.
+
+== Introduction
+
+Why not built a document with beep ?
+
+== Services
+
+=== User Services
+
+User services allow users to do stuff.
+
+[example]
+This is an example of an example block.
