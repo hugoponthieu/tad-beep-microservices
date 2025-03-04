@@ -1,0 +1,15 @@
+= Technical documentation of beep
+Technical architecture documentation of beep in order to break down the application into microservices.
+
+== Drafts
+
+Every folder of this repository are some drafts of the application. They are not the final version of the application but they are the first step to build the application.
+
+
+== Template 
+
+The template file a the root of the repo is the main file that will be used to generate the documentation.
+It will througth my researches and the different drafts of the application.
+
+
+

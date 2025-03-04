@@ -26,7 +26,6 @@ image::services/beep-application_diagramme.jpg[]
 
 ==== Authorization
 
-
 == Implementation
 
 === Deployment
