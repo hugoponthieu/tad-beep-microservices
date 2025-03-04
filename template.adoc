@@ -3,22 +3,70 @@ Hugo Ponthieu <hugopont08@gmail.com>
 :description: Description of the document
 :sectnums:
 :toc: 
-
+:title-page:
 
 [abstract]
 == Abstract
 
 This is the abstract of the document.
 
-== Introduction
 
-Why not built a document with beep ?
+== Global Architecture
 
-== Services
+=== Presentation 
 
-=== User Services
+=== Schema
 
-User services allow users to do stuff.
+.Overview of the application
+image::services/beep-application_diagramme.jpg[]
 
-[example]
-This is an example of an example block.
+=== Security
+
+==== Authentication
+
+==== Authorization
+
+
+== Implementation
+
+=== Deployment
+
+==== Mesh Service
+
+=== Protocols
+
+==== Inter-service communication
+
+==== Client communication
+
+=== Services
+
+==== Messages
+
+===== Search
+
+==== Users 
+
+==== Members
+
+==== Roles
+
+==== Authorization
+
+.Create a message in a channel of a server and check the authorization
+image::security/sequence_auth.png[]
+
+
+==== Servers
+
+==== Channels
+
+==== Messages
+
+==== Webhooks 
+
+=== Backuping
+
+=== Monitoring
+
+
