@@ -24,6 +24,10 @@ image::services/beep-application_diagramme.jpg[]
 
 ==== Authentication
 
+link:https://github.com/hugoponthieu/beep-front[Frontend integration of keycloak]
+
+link:https://github.com/hugoponthieu/beep-api[Backend integration of keycloak]
+
 ==== Authorization
 
 == Implementation
@@ -33,6 +37,8 @@ image::services/beep-application_diagramme.jpg[]
 ==== Mesh Service
 
 === Protocols
+
+link:https://github.com/hugoponthieu/hello-transport[Poc grpc with rust]
 
 ==== Inter-service communication
 
