@@ -1,9 +1,12 @@
-= Title of document
+= Beep: The microservice way
 Hugo Ponthieu <hugopont08@gmail.com>
-:description: Description of the document
+:description: Redefine the architecture of the Beep application
+:keywords: beep, architecture, microservices, keycloak, grpc, rust, monitoring, backuping
+:doctype: acticle
 :sectnums:
 :toc: 
 :title-page:
+:pdf-fontsize: 12
 
 [abstract]
 == Abstract
@@ -15,9 +18,231 @@ Currently the application is developed in a monolithic way. As the features grow
 
 Those outage can be caused by high loads or network issues. It can also come from the development team that can introduce bugs in the application. The decoupling of responsibilities that offer microservices architecture will help to reduce the impact of a single component failure and let us to scale the application more easily.
 
+== Application Overview
+
+=== Current features
+
+**Chatting via channels**: Users can create channels and send messages to each other. They can also create private channels to communicate with their friends.
+
+**Servers**: Server are the main entity of the application. They regroup users and channels. A user can be part of multiple servers. A server can have multiple channels. 
+Inside, allowed users can communicate with each other or define roles.
+Web
+
+=== End-user capabilities
+
+To better design and implement the application, we will need to define the capabilities of the users. With the needs of client in mind, we will be able to define parts of the application that can be separated.
+
+But also we will be able to define any point of dependency between the services. This will allow us to define potential interactions between the services.
+
+We will try to define the capabilities of the user by making it impersonate different characters. There will be characters based on the authorization level of the user: 
+- Guest user: A user that is not authenticated
+- User: A user that is authenticated
+
+But also on more fine grained authorization level:
+- UserModerator: A user that can perform some actions on the users
+- ServerModerator: A user that can perform manage the server of the application
+
+And of course there will be more fined grained authorization on resources that we will define along with the capabilities of the user.
+
+==== Account
+
+We will begin like if a user just discrovers the application. He will be able to access the application as a guest user.
+
+As a guest user I want to be able to sign up using:
+
+- My email and password
+- My google account
+- My Polytech account 
+
+The users that are sign up will have the abilitie to authenticate and access the application only once their account is validated.
+
+As a user:
+
+- I want to be able to sign in using the same methods as the sign up in order to access the application.
+- that is sign in with my email and password I want to be able to link my google account to my account so that I can later authenticate with it.
+- I want to change my password in order to secure my account.
+- I want to be able to delete my account in order to leave the application.
+
+Once the user is authenticated he will be able to access the application. 
+Therefore we will focus now more on action that he can perform on his profile information.
+
+As a user:
+
+- I want to be able to update my profile information such as my name, last name, nickname and profile picture in order to keep it up to date.
+- I want to be able to change my email in order to transfer my account to another email.
+- I want to be able to change my password in order to secure my account.
+- I want to be able to activate Two-Factor Authentication in order to secure my account.
+- I want to be able to deactivate Two-Factor Authentication in order to secure my account.
+- I want to be able to delete my account in order to leave the application.
+
+[red]#NOTE: USE CASE DIAGRAM#
+
+==== Social
+
+Once authenticated the user will be able to access some features without any further authorization. He will be able to access the friends system.
+We can first focus on the friend management for a given user.
+
+As a user I want to:
+
+- invite a user from their username to add a friend. 
+- list the invitations that I have sent or that other user sent me in order to manage them.
+- accept a friend request in order to connect with the user.
+- decline a friend request.
+- cancel a friend request that I have sent in order to not have the user as friend.
+
+Once I am friend with a user I want to be able to manage my frienship.
+
+As a user I want to:
+
+- list my friends in order to see who are my friends.
+- remove a friend in order to not have him as friend anymore.
+
+In order to regroup users, users be members of servers. There are 2 types of servers, public and private. 
+The user can join a public server without any authorization. 
+But he will need to be invited to join a private server.
+So as a user I want to:
+
+- see all the public servers in order to join them.
+- see all the servers that I am member of in order to manage them.
+- leave server so that I am not related to it anymore.
+- be able to answer to a server invitation so I can be a member of a server.
+- browse the servers by their name and description so I can find the communities that I want to join.
+
+[red]#NOTE: USE CASE DIAGRAM#
+
+==== Chatting
+
+As user discover other users, he will want to interact with them. He will be able to do that through the chat system.
+It is composed of channel that contain messages. We will see in that part what are the abilities.
+As a user I want to: 
+
+- create a channel to be able to communicate with other users.
+- delete a channel in order to not have it anymore.
+- list the channels that I am part of in order to manage them.
+- join a channel in order to communicate with the users.
+- leave a channel in order to not be part of it anymore.
+- add a user to a channel in order to let him communicate with the users.
+- to search thrgouh the entire messages of a channel to find a message based on a keyword
+
+
+With access to a channel the user will want to discuss with other users. 
+As a user I want to:
+
+- send a message in a channel in order to communicate with the users.
+- send files in a message in order to share them with the users.
+- delete a message so that I clean a channel.
+- edit a message in order to correct it.
+- list the messages of a channel in order to see the history of the channel.
+- to pin messages in a channel to keep them visible for long time.
+
+[red]#NOTE: USE CASE DIAGRAM#
+
+==== Severs
+
+As cited before the user will be able to join servers. They regroup users and channels.
+A user that is authenticated and that as access to a particular server is called a member of the server.
+
+By default a member will not perform any action on the server. He will need to be granted with a role to perform some actions. Role are defined at the server level and they will be aggregation of more fine-grained role.
+
+The fine-grained roles will be:
+
+- administrator
+- server manager 
+- role manager
+- channel manager
+- channel viewer
+- webhook manager
+- nickname manager
+- nickname changer
+- message sender
+- message manager
+- file attacher
+- member manager
+- invitation manager
+
+As invitation manager I want to:
+
+- invite a user to a server in order to let him join the server.
+- create an invitation in order to let users join the server.
+- choose the expiration date of an invitation in order to manage the invitations.
+
+As a member manager I want to:
+
+- add a role to a member so they can perform specific actions.
+- remove a role from a member to prevent them from performing certain actions.
+- list the members of a server to manage them effectively.
+- temporarily mute members to restrict them from sending messages.
+- ban members to prevent them from joining the server.
+- kick members to remove them from the server.
+
+As a role manager I want to:
+
+- create a role to define user permissions.
+- update a role to modify user permissions.
+- delete a role to remove it from the system.
+- list the roles of a server to manage them.
+- assign roles to members to enable them to perform specific actions.
+- remove roles from members to restrict their actions.
+
+As a nickname manager I want to:
+
+- update the nickname of a member to change their display name.
+- change my own nickname to update my display name.
+
+As a nickname changer I want to:
+
+- change my own nickname to update my display name.
+
+As a channel manager I want to:
+
+- create a channel to enable users to communicate.
+- update a channel to modify its settings.
+- delete a channel to remove it from the server.
+- list the channels of a server to manage them.
+- restrict permissions of user or role on a channel to control user actions.
+
+As a channel viewer I want to:
+
+- list the messages of a channel to view the conversation.
+- search for messages in a channel to find specific information.
+- list channel of a server to find the channel I want to see the conversation of.
+
+As a message sender I want to:
+
+- send a message in a channel to communicate with other users.
+- update a message to correct it.
+
+As a message manager I want to:
+
+- delete a message to remove it from the channel.
+- pin a message to keep it visible in the channel.
+- perform same action as the message sender.
+
+As a file attacher I want to:
+
+- attach a file to a message to share it with other users.
+
+As a server manager I want to:
+
+- update the server settings to modify its configuration.
+- delete the server to remove it from the system.
+- perform the same action as the channel manager.
+
+As an administrator I want to:
+
+- perform all actions on the server to manage it effectively.
+
+[red]#NOTE: USE CASE DIAGRAM#
+
+==== Administration
+
+
+
+
 == Global Architecture
 
 === Presentation 
+
 
 === Schema
 
@@ -112,9 +337,11 @@ The global wide role will be declared in the authorization server and will be us
 **For example**
 
 We can declare a "UserModerator" role that will have the abilities to:
+
 - Restraint users from the application
 
 We can declare "ServerModerator" role that will have the abilities to:
+
 - Restraint users from a server
 - Restraint users from a channel
 - Restraint servers where users perform some actions that are not allowed
