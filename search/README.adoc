@@ -31,4 +31,4 @@ Futhermore the we could extend this search engine by using hybrid search.
 
 Draw back: 
 No integration in languages
-
+Only compatible with PostgresSQL

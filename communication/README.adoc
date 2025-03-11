@@ -8,6 +8,8 @@ link:https://grpc.io/docs/guides/metadata/#be-aware[Metadata in gRPC]
 
 link:https://learn.microsoft.com/en-us/aspnet/core/grpc/comparison?view=aspnetcore-9.0[Comparison of gRPC and HTTP APIs]
 
+link:https://medium.com/@joudwawad/microservices-pattern-distributed-transactions-saga-92b5e933cea1[Microservices Pattern: Distributed Transactions (Saga)]
+
 == State of the art
 
 Many protocols are used today to communicate between different services over different types of networks. Here are some of them:
@@ -23,4 +25,4 @@ When a event is sent a central serviec must dispatch events.
 The communication with the client will be done with HTTP and Websockets.
 and the communication between the services will be done with GRPC.
 
-Wasm to consum the API in order to have the same bindings
+image::beep-server-creation.svg[]

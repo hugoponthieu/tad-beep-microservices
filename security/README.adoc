@@ -134,3 +134,160 @@ Casbin is a powerful and efficient open-source access control library for Golang
 
 .Create a message in a channel of a server
 image::sequence_auth.png[]
+
+Example plan for keycloak:
+
+== Authentication with Keycloak and Istio
+
+=== Introduction
+Authentication is a critical aspect of any microservices architecture. In this document, we will discuss how to integrate Keycloak for authentication and use Istio to enforce authentication policies at the gateway level.
+
+=== Keycloak Overview
+Keycloak is an open-source identity and access management solution. It provides features such as single sign-on (SSO), user federation, and social login. Keycloak is a suitable choice for our application due to its robust authentication capabilities and ease of integration with microservices.
+
+=== Istio Overview
+Istio is a service mesh that provides a uniform way to secure, connect, and observe microservices. It enhances security by providing features such as mutual TLS (mTLS), traffic management, and policy enforcement.
+
+=== Integration of Keycloak with Istio
+In our architecture, Keycloak will handle user authentication and issue tokens. Istio will enforce authentication policies by verifying these tokens at the ingress gateway. This ensures that only authenticated requests are allowed to access the microservices.
+
+=== Deployment Steps
+1. **Deploy Keycloak**: Use the following YAML file to deploy Keycloak in your Kubernetes cluster.
+    ```yaml
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: keycloak
+      namespace: keycloak
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: keycloak
+      template:
+        metadata:
+          labels:
+            app: keycloak
+        spec:
+          containers:
+          - name: keycloak
+            image: jboss/keycloak:latest
+            ports:
+            - containerPort: 8080
+    ```
+2. **Configure Istio**: Use the following YAML file to configure Istio to work with Keycloak.
+    ```yaml
+    apiVersion: security.istio.io/v1beta1
+    kind: RequestAuthentication
+    metadata:
+      name: keycloak-auth
+      namespace: istio-system
+    spec:
+      selector:
+        matchLabels:
+          istio: ingressgateway
+      jwtRules:
+      - issuer: "https://keycloak.example.com/auth/realms/myrealm"
+        jwksUri: "https://keycloak.example.com/auth/realms/myrealm/protocol/openid-connect/certs"
+    ```
+
+=== Authentication Flow
+1. The user logs in through Keycloak and obtains a JWT token.
+2. The user sends a request to the application with the JWT token.
+3. The Istio ingress gateway intercepts the request and verifies the token.
+4. If the token is valid, the request is forwarded to the appropriate microservice.
+
+=== Security Considerations
+- Ensure that all communication between services is encrypted using mTLS.
+- Regularly update and rotate keys used by Keycloak and Istio.
+
+=== Example Configuration
+Refer to the provided YAML files for deploying Keycloak and configuring Istio.
+
+=== Testing and Validation
+1. **Test Keycloak**: Access the Keycloak admin console and create a test user.
+2. **Validate Istio**: Send a request with a valid JWT token and verify that it is accepted. Send a request with an invalid token and verify that it is rejected.
+
+=== Conclusion
+By integrating Keycloak with Istio, we can ensure secure and efficient authentication for our microservices. This setup provides a scalable and manageable solution for handling authentication in a microservices architecture.
+
+
+
+
+== Authorization in the Application
+
+=== Introduction
+Authorization is a critical aspect of any microservices architecture. In this document, we will discuss how to implement role-based access control (RBAC) within servers and global roles in our application. We will use tools like Keycloak, OPA, Permify, and Casbin to manage roles and permissions.
+
+=== Role-Based Access Control (RBAC)
+RBAC is a method of regulating access to resources based on the roles assigned to users. Roles are a grouping of permissions, and users can be assigned multiple roles. This approach simplifies the management of permissions and ensures that users have the appropriate access to resources.
+
+=== Server-Specific Roles
+In our application, each server can have its own set of roles. These roles define what actions users can perform within the server. For example, a user with the `VIEW_CHANNELS` role can see the channels and their contents, while a user with the `SEND_MESSAGES` role can send messages in the channels.
+
+Example server-specific roles:
+- `ADMINISTRATOR`: Can perform any action on any subject (channels, webhooks, etc.) in a server.
+- `MANAGE_SERVER`: Can update a server (all CRUD operations except delete).
+- `MANAGE_ROLES`: Can perform all CRUD operations on all roles.
+- `CREATE_INVITATION`: Can create server invites.
+- `MANAGE_CHANNELS`: Can perform all CRUD operations on every channel.
+- `MANAGE_WEBHOOKS`: Can perform all CRUD operations on every webhook.
+- `VIEW_CHANNELS`: Can see the channel and its contents (messages).
+- `SEND_MESSAGES`: Can send messages on the channel.
+- `MANAGE_NICKNAMES`: Can update other users’ nicknames.
+- `CHANGE_NICKNAME`: Can update your own nickname.
+- `MANAGE_MESSAGES`: Can delete other users’ messages.
+- `ATTACH_FILES`: Can upload images and files.
+
+=== Global Roles
+Global roles apply across the entire application and have broader permissions. For example, an `ApplicationAdministrator` can perform any action on any subject in the application, including managing users, servers, and roles.
+
+Example global roles:
+- `ApplicationAdministrator`: Can perform any action on any subject (channels, webhooks, etc.) in the application.
+- `UserAdministrator`: Can manage user accounts and permissions.
+- `ServerAdministrator`: Can manage servers and their configurations.
+
+=== Implementation Details
+To implement server-specific roles and global roles, we will use Keycloak for managing user identities and roles, OPA for enforcing fine-grained authorization policies, Permify for defining and managing permissions, and Casbin for integrating access control models.
+
+Example Keycloak configuration for defining roles:
+```yaml
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakRealm
+metadata:
+  name: myrealm
+spec:
+  realm:
+    realm: myrealm
+    roles:
+      realm:
+        - name: ApplicationAdministrator
+        - name: UserAdministrator
+        - name: ServerAdministrator
+      client:
+        - clientId: myclient
+          roles:
+            - name: ADMINISTRATOR
+            - name: MANAGE_SERVER
+            - name: MANAGE_ROLES
+            - name: CREATE_INVITATION
+            - name: MANAGE_CHANNELS
+            - name: MANAGE_WEBHOOKS
+            - name: VIEW_CHANNELS
+            - name: SEND_MESSAGES
+            - name: MANAGE_NICKNAMES
+            - name: CHANGE_NICKNAME
+            - name: MANAGE_MESSAGES
+            - name: ATTACH_FILES
+
+```
+
+=== Example Configuration 
+Refer to the provided YAML files for defining roles and permissions in Keycloak. Additionally, configure OPA, Permify, and Casbin to enforce access control policies.
+
+=== Testing and Validation
+
+Test Keycloak: Access the Keycloak admin console and create test users with different roles.
+Validate Authorization: Send requests with different roles and verify that the permissions are correctly enforced.
+=== Conclusion 
+By implementing role-based access control (RBAC) with server-specific roles and global roles, we can ensure secure and efficient authorization for our microservices. This setup provides a scalable and manageable solution for handling authorization in a microservices architecture. 
