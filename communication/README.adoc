@@ -10,6 +10,13 @@ link:https://learn.microsoft.com/en-us/aspnet/core/grpc/comparison?view=aspnetco
 
 link:https://medium.com/@joudwawad/microservices-pattern-distributed-transactions-saga-92b5e933cea1[Microservices Pattern: Distributed Transactions (Saga)]
 
+link:https://microservices.io/patterns/apigateway.html[API Gateway]
+
+link:https://microservices.io/patterns/server-side-discovery.html[Server-Side Service Discovery]
+
+link:https://microservices.io/patterns/reliability/circuit-breaker.html[Circuit Breaker]
+
+link:https://microservices.io/patterns/server-side-discovery.html[Server-Side Service Discovery]
 == State of the art
 
 Many protocols are used today to communicate between different services over different types of networks. Here are some of them:
@@ -26,3 +33,91 @@ The communication with the client will be done with HTTP and Websockets.
 and the communication between the services will be done with GRPC.
 
 image::beep-server-creation.svg[]
+
+== 1. Introduction
+Briefly introduce the importance of communication protocols in a microservices architecture.
+Mention the protocols you will use: HTTP, Websockets, and gRPC.
+
+== 2. Overview of Protocols
+Provide an overview of different communication protocols: HTTP, Websockets, and gRPC.
+Explain the advantages and disadvantages of each protocol.
+
+== 3. Why gRPC?
+Explain why gRPC is a suitable choice for your application.
+Highlight the benefits of gRPC, such as performance, type safety, and support for multiple languages.
+
+== 4. gRPC in Microservices
+Describe how gRPC will be used for inter-service communication.
+Explain the structure of gRPC services and how they will be defined.
+
+== 5. Implementation Details
+Provide detailed steps to implement gRPC in your microservices.
+Explain how to define gRPC services, messages, and methods.
+
+== 6. Example Configuration
+Provide example configurations for setting up gRPC services.
+Include code snippets for defining and implementing gRPC services.
+
+== 7. Testing and Validation
+Explain how to test gRPC services.
+Provide steps to validate that gRPC communication is working correctly.
+
+== 8. Conclusion
+Summarize the benefits of using gRPC for communication in your microservices architecture.
+Mention any future improvements or additional features you plan to implement.
+
+=== Example Content
+
+=== Example Configuration
+Refer to the provided .proto file for defining gRPC services. Additionally, configure the microservices to use the generated gRPC code.
+
+=== Example gRPC service implementation in Go
+
+Plan for Networking in Microservices with Istio
+
+== 1. Introduction
+Briefly introduce the importance of networking in a microservices architecture.
+Mention the tools and technologies you will use: Istio as the service mesh.
+
+== 2. Service Mesh Overview
+Explain what a service mesh is and its role in microservices.
+Highlight the benefits of using a service mesh, such as traffic management, security, and observability.
+
+== 3. Istio Overview
+Provide an overview of Istio and its components.
+Explain how Istio enhances networking in microservices.
+
+== 4. mTLS (Mutual TLS)
+Describe what mTLS is and its importance in securing communication between services.
+Explain how Istio implements mTLS to ensure secure communication.
+Provide configuration examples for enabling mTLS in Istio.
+
+== 5. Gateway and Securing with TLS
+Explain the role of Istio Gateway in managing inbound and outbound traffic.
+Describe how to secure the gateway with TLS to protect external communication.
+Provide configuration examples for setting up TLS on Istio Gateway.
+
+== 6. Circuit Breaking
+Explain what circuit breaking is and its importance in maintaining service reliability.
+Describe how Istio implements circuit breaking to prevent cascading failures.
+Provide configuration examples for setting up circuit breaking in Istio.
+
+== 7. Client-Side and Server-Side Discovery
+Explain the concepts of client-side and server-side service discovery.
+Describe how Istio handles service discovery and routing.
+Provide configuration examples for service discovery in Istio.
+
+== 8. Additional Networking Concepts
+Discuss other important networking concepts such as load balancing, retries, and timeouts.
+Explain how Istio manages these concepts to ensure reliable communication.
+
+== 9. Conclusion
+Summarize the benefits of using Istio for networking in microservices.
+Mention any future improvements or additional features you plan to implement.
+
+
+### Additional Subjects to Consider
+- **Observability**: Discuss how Istio provides observability features such as metrics, logging, and tracing.
+- **Traffic Management**: Explain how Istio manages traffic routing, mirroring, and fault injection.
+- **Policy Enforcement**: Describe how Istio enforces policies for rate limiting, quotas, and access control.
+- **Canary Deployments**: Discuss how Istio supports canary deployments for gradual rollouts of new versions.

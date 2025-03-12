@@ -236,8 +236,14 @@ As an administrator I want to:
 
 ==== Administration
 
+With the affluence of users, the application will need to be managed. The administration of resource will be done by different type of admin.
+This time role will be directly associated to the users.
 
+Roles will be:
 
+- UserModerator
+- ServerModerator
+- ApplicationAdministrator
 
 == Global Architecture
 
@@ -361,11 +367,79 @@ This service declare itself as Authorization as a Service. It will be used to ma
 
 === Deployment
 
-==== Mesh Service
+=== Networking
+
+Microservices implies some networking constraints such as securing a flow of data between services, managing the load of the services, and ensuring the availability of the services.
+
+For that task we will use Istio as a service mesh. It will allow us to manage the networking of the services in a more efficient way.
+
+==== Service Mesh Overview
+
+A service mesh is a dedicated infrastructure layer that provides service-to-service communication, observability, and security for microservices applications. It abstracts the network and provides a set of features that simplify the development and operation of microservices.
+
+Service mesh provides the following benefits:
+
+- Traffic management: control the flow of traffic between services, implement routing rules, and perform load balancing.
+- Security: provides encryption, authentication, and authorization to secure communication between services.
+- Observability: provides metrics, logging, and tracing to monitor the performance and health of services.
+
+==== Istio Overview
+
+Istio is an open-source implementation of a service mesh that provides advanced networking features for microservices applications. 
+It integrates with Kubernetes and provides a set of tools to manage service-to-service communication, security, and observability.
+
+One of the key advantages of using Istio is that it is actively developed and maintained by a well-known and reputable community. This ensures that the project remains up-to-date with the latest features, security patches, and best practices. As a result, Istio is a reliable and robust choice for a microservices project that is intended to last over time.
+
+One of the main component of Istio is the data plane that will be used to manage the traffic between the services.
+It will be composed of Envoy proxies that will be deployed alongside the services.
+All the traffic coming and leaving a pod is redirected to the Envoy proxy that will manage the traffic.
+This will allow to implement a lot of traffic related features such as load balancing, retries, timeouts, and circuit breaking. 
+
+Via proxies Istio is capable to log, trace and monitor natively and seamlessly  the traffic between the services. This will allow to have a better observability of the application.
+
+As describe, Istio will allow us to manage a lot of constraints outside of the services and let the services focus on their core functionalities. 
+It is really suitable to delegate the networking constraints to a dedicated service that will manage them in a more efficient way.
+
+==== mTLS (Mutual TLS)
+
+Mutual Transport Layer Security (mTLS) is a security protocol that provides encryption, authentication, and integrity for communication between services. 
+It ensures that only trusted services can communicate with each other and that the data exchanged between services is secure.
+
+In our application, we will use mTLS to secure communication between services and prevent unauthorized access to sensitive data. By enabling mTLS, we can ensure that all communication between services is encrypted and authenticated, reducing the risk of data breaches and unauthorized access.
+
+Istio provides built-in support for mTLS and makes it easy to enable mTLS for all services in the mesh.
+
+[red]#NOTE: SCHEME OF THE PROXIES WITH MTLS#
+
+==== Gateway and Securing with TLS
+
+Istio Gateway is a component that manages inbound and outbound traffic for services in the mesh. It acts as an entry point for external traffic and provides features such as load balancing, routing, and security.
+
+In our application, we will use Istio Gateway to manage external traffic and secure communication with clients.
+By configuring Istio Gateway with Transport Layer Security (TLS), we can encrypt traffic between clients and services, ensuring that data is secure in transit.
+
+Istio Gateway provides built-in support for TLS and makes it easy to configure TLS settings for services in the mesh. 
+By enabling TLS on Istio Gateway, we can secure communication with clients and protect sensitive data from eavesdropping and tampering.
+
+[red]#NOTE: SCHEME OF THE GATEWAY#
+
+==== Circuit Breaking
+
+Circuit breaking is a design pattern that prevents cascading failures in distributed systems. 
+It works by monitoring the health of services and breaking the circuit if a service becomes unresponsive or slow.
+
+In our application, we will use circuit breaking to ensure service reliability and prevent service degradation. 
+By implementing circuit breaking in Istio, we can detect and isolate failing services, preventing them from affecting other services in the mesh.
+
+
+[red]#NOTE: SCHEME CIRCUIT BREAKING#
+
 
 === Protocols
 
 link:https://github.com/hugoponthieu/hello-transport[Poc grpc with rust]
+
+In order to manage the 
 
 ==== Inter-service communication
 
