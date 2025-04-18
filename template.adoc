@@ -264,10 +264,14 @@ link:https://github.com/hugoponthieu/beep-front[Frontend integration of keycloak
 link:https://github.com/hugoponthieu/beep-api[Backend integration of keycloak]
 
 ===== Introduction
-Authentication is a critical aspect of any microservices architecture. In this document, we will discuss how to integrate Keycloak for authentication to enforce authentication policies at the gateway level.
+
+Authentication is a critical aspect of any microservices architecture. 
+In this document, we will discuss how to integrate Keycloak for authentication to enforce authentication policies at the gateway level.
 
 ===== Keycloak Overview
-Keycloak is an open-source identity and access management solution. It provides features such as single sign-on (SSO), user federation, and social login. Keycloak is a suitable choice for our application due to its robust authentication capabilities and ease of integration with microservices.
+
+Keycloak is an open-source identity and access management solution. It provides features such as single sign-on (SSO), user federation, and social login. 
+Keycloak is a suitable choice for our application due to its robust authentication capabilities and ease of integration with microservices.
 
 As the user should be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP Keycloak is suited for this task.
 
@@ -285,9 +289,9 @@ It will take the responsability to:
 
 
 ===== OAuth2 Overview
-OAuth2 is an authorization framework that enables applications to obtain limited access to user accounts on an HTTP service. It works by delegating user authentication to the service that hosts the user account and authorizing third-party applications to access the user account. This is done without exposing the user's credentials to the application.
+OAuth2 is an authorization framework that allows applications to securely obtain limited access to user accounts on an HTTP service by delegating authentication to a centralized identity provider, such as Keycloak.
 
-OAuth2 is suitable for microservice applications because it provides a secure and standardized way to handle authentication and authorization across multiple services. By using OAuth2, microservices can delegate the responsibility of user authentication to a centralized identity provider, such as Keycloak, and focus on their core functionalities. This approach simplifies the management of user identities and access control in a distributed system.
+**Authorization Code Flow**: This flow is suitable for applications that can securely store client secrets. It involves exchanging an authorization code for an access token.
 
 
 ===== In our architecture
@@ -303,15 +307,6 @@ We have to note that all service will have an upstream gateway that will check t
 Although the user will maybe need to be known by the service, in order to perform some actions. For example, getting the the list of its friends or direct messages.
 In that case the service will access directly the authorization server to get the user information.
 
-===== Flows 
-
-**Authorization Code Flow**: This flow is suitable for applications that can securely store client secrets. It involves exchanging an authorization code for an access token.
-
-**Implicit Flow**: This flow is suitable for public clients, such as single-page applications, where the client secret cannot be securely stored. It involves directly obtaining an access token without an intermediate authorization code.
-
-**Resource Owner Password Credentials Flow**: This flow is suitable for applications that have a high degree of trust with the user, such as first-party clients. It involves exchanging the user's credentials for an access token.
-
-**Client Credentials Flow**: This flow is suitable for machine-to-machine communication, where the client is acting on its own behalf. It involves exchanging the client's credentials for an access token.
 
 ===== End-user authentication
 
@@ -328,40 +323,41 @@ If the users try to access to the frontend wit
 
 Authorization is a critical aspect of any microservices architecture. In this document, we will discuss how to implement role-based access control (RBAC) within servers and global roles in our application. 
 
-===== Global Roles
+===== Roles
 
-Global roles are roles that are defined at the application level and apply to all services. They are typically used to define high-level permissions that are common across services.
-In our application, we will define global roles such as `admin`, `moderator`, and `user`.
-These roles will be used to enforce access control policies at the application level.
+Roles in the application are categorized into two types:
 
-For this kind of roles we can use role based access control (RBAC) to define the permissions associated with each role. This will allow us to define fine-grained access control policies based on the user's role.
+- **Global Roles**: Defined at the application level, these roles apply across all services and enforce high-level access control policies (e.g., `admin`, `moderator`, `user`).
 
-Then the role will be assiocated to users. The user granted with a role will be able to access the resources associated with the role.
+- **Server Roles**: Defined at the server level, these roles are specific to individual servers and manage permissions within that context.
 
-The global wide role will be declared in the authorization server and will be used by the services to check the user's role.
-
-**For example**
-
-We can declare a "UserModerator" role that will have the abilities to:
-
-- Restraint users from the application
-
-We can declare "ServerModerator" role that will have the abilities to:
-
-- Restraint users from a server
-- Restraint users from a channel
-- Restraint servers where users perform some actions that are not allowed
-
-===== Server Roles
-
-Server roles are roles that are defined at the server level and apply to a specific server. They are typically used to define permissions that are specific to a server.
-
-Like in the global roles model we will have to define the fine grained access to control the access of the user to the resources of the server.
+Both types of roles will be used to implement fine-grained access control policies.
 
 ===== Permify
 
-This service declare itself as Authorization as a Service. It will be used to manage the roles and the permissions of the users.
+Permify implement Authorization as a Service. It will be used to manage the roles and the permissions of the users.
 
+Permify exposes an REST and a GRPC api that contain the same endpoints. We will use the GRPC api to communicate with the service as it is lighter for communication between services.
+
+When performing an action on a resource, the service will check if the user has the required role to perform the action. This is a purely binary response, either the user is allowed or not.
+
+====== Data management
+
+Permify hold the data in a Postgres database. It will be used to store the roles and the permissions of the users.
+We will therefore need to replicates the data in the Permify database.
+
+We will develop a service that hold the logic that can be used to manage the data in the Permify database. This service will be callable with a GRPC api.
+This service will be called when the following operation are performed:
+- a user join a server
+- a user leave a server
+- a user is assigned a Server-wide & Application-wide role 
+- a user is removed from a Server-wide & Application-wide role
+- a user is muted
+- a user is unmuted
+- a user is banned
+- a user is kicked
+
+The service will therefore hold the data and will be able to enforce the rules on the data.
 
 == Implementation
 
@@ -439,7 +435,41 @@ By implementing circuit breaking in Istio, we can detect and isolate failing ser
 
 link:https://github.com/hugoponthieu/hello-transport[Poc grpc with rust]
 
-In order to manage the 
+==== Overview of Protocols
+
+Protocols are a fundamental component of microservices architecture, dictating the mechanisms by which services interact and exchange data. 
+This section delves into the technical intricacies of various protocols, including REST, gRPC, and GraphQL, and elucidates the rationale behind selecting gRPC for our application.
+
+HTTP/1.1, commonly used for RESTful APIs, is advantageous due to its simplicity, widespread adoption, and ease of implementation. 
+It supports complex REST APIs and is inherently compatible with web browsers. 
+However, it suffers from several limitations: the lack of type safety, verbosity of JSON payloads, and suboptimal performance due to the overhead of HTTP headers and the text-based JSON format. 
+Despite these drawbacks, REST APIs can be secured using HTTPS with TLS (Transport Layer Security), ensuring encrypted communication.
+
+REST APIs benefit from self-discoverability through OpenAPI specifications, which facilitate seamless integration and collaboration among microservices developed by disparate teams. 
+This discoverability is crucial in a microservices ecosystem where services must interoperate efficiently.
+
+gRPC's strong typing and contract-first approach, enforced through .proto files, ensure consistency and reliability in inter-service communication. 
+This is particularly beneficial in large-scale microservices architectures where maintaining compatibility and preventing breaking changes are paramount.
+
+
+Given the technical requirements of our application, including the need for efficient, low-latency communication and strong typing, we have chosen gRPC as the primary protocol for inter-service communication. 
+gRPC's performance advantages, coupled with its robust type safety and support for bi-directional streaming, make it an ideal choice for our microservices architecture.
+
+In summary, while REST have its merits, gRPC's technical superiority in terms of performance, efficiency, and type safety aligns with the demands of our application, ensuring reliable and scalable inter-service communication.
+
+// GraphQL, another protocol, provides a flexible query language for APIs, allowing clients to request precisely the data they need. 
+// While powerful, GraphQL introduces complexity in terms of query parsing and execution, and may not be as performant as gRPC for certain use cases, particularly those involving high-throughput, low-latency communication.
+
+==== gRPC
+
+Remote Procedure Call (RPC) is a protocol that one program can use to request a service from a program located on another computer in a network. It allows a program to execute a procedure (subroutine) in another address space (commonly on another physical machine). The calling program is suspended until the remote procedure returns, and the remote procedure executes in a different address space. RPC abstracts the communication between the client and server, making it appear as if the procedure call is local.
+
+gRPC is a high-performance, open-source RPC framework developed by Google. It uses Protocol Buffers (protobuf) as the interface definition language (IDL) and leverages HTTP/2 for transport. gRPC offers several advantages over traditional RESTful APIs, including:
+
+- Speed: Faster than REST due to HTTP/2, which allows multiple requests at once, compresses headers, and supports server push.
+- Strong typing: Uses protobuf for data, ensuring messages are consistent and efficient.
+- Real-time: Supports two-way streaming, letting clients and servers send multiple messages in real-time.
+- Multi-language: Works with many programming languages, making it easy to build services in different languages.
 
 ==== Inter-service communication
 

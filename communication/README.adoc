@@ -17,6 +17,12 @@ link:https://microservices.io/patterns/server-side-discovery.html[Server-Side Se
 link:https://microservices.io/patterns/reliability/circuit-breaker.html[Circuit Breaker]
 
 link:https://microservices.io/patterns/server-side-discovery.html[Server-Side Service Discovery]
+
+link:https://grpc.io/docs/guides/metadata[Metadata in gRPC]
+
+link:https://github.com/prakashchokalingam/envoy_ext_auth_grpc_go[Envoy External Authorization gRPC]
+
+link:https://gerswayne.medium.com/simple-dockerized-grpc-application-with-envoy-ext-authz-example-6c200e0a2d34[Simple Dockerized gRPC Application with Envoy Ext Authz Example]
 == State of the art
 
 Many protocols are used today to communicate between different services over different types of networks. Here are some of them:
