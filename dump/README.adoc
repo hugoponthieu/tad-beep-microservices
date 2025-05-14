@@ -7,3 +7,12 @@ It will also let me try asciidoc syntax.
 link:https://www.youtube.com/watch?v=vJweuU6Qrgo[Cert manager + Let's Encrypt + Traefik]
 
 link:https://medium.com/microsoftazure/certificate-pinning-for-mtls-authentication-at-the-istio-ingress-gateway-978ed31699ab[Certificate pinning for mTLS authentication at the Istio ingress gateway]
+
+Services
+Deployment logiciel
+Backup
+Deployment hardware
+Network waf
+Monitoring Alerting
+Secret management with vault ?
+Throtthling on messages

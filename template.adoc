@@ -479,32 +479,234 @@ image::communication/beep-server-creation.svg[][]
 
 === Services
 
-==== Messages
-
-===== Search
 
 ==== Users 
 
-==== Members
+The user service is responsible for managing user accounts, including registration, authentication, and profile management. It handles user-related operations such as creating, updating, and deleting user accounts.
+It also manages user preferences, settings, and security features like password resets and two-factor authentication.
+It will expose a REST API for user management and a gRPC API for inter-service communication.
 
-==== Roles
+The user service will rely on Keycloak. In fact all the data will be stored in the Keycloak database. and we will use the Keycloak API to manage the users.
+
+Therefore keycloak will be hold the datas for the all the users of the application. And all the services will enforce the authentication of users through the Keycloak API.
+
+Keycloak will rely on a Postgres database to store the data.
+
+[red]#NOTE: SCHEMA OF THE KEYCLOAK DATABASE#
+
+
+==== File storage
+
+The file storage service is responsible for managing file uploads and downloads. It handles file-related operations such as uploading, downloading, and deleting files.
+It will expose a REST API for file management and a gRPC API for inter-service communication.
+The file storage service will rely on a Minio server to store the files. Minio is an open-source object storage server that is compatible with Amazon S3. It provides a simple and efficient way to store and retrieve files.
+The file storage service will use the Minio API to manage the files. It will store the files in a Minio bucket and provide a URL for each file that can be used to access it.
+[red]#NOTE: SCHEMA OF THE MINIO DATABASE#
+
+Each service will have its own path to store the files. The file storage service will use a unique prefix for each service to avoid conflicts. For example, the user service will store files in the `user` prefix, while the message service will store files in the `message` prefix.
+
+==== Servers 
+
+A lot of objects have strong relation with servers. That is why the server service will be responsible for managing servers,members, roles, channels, and webhooks.
+The server service will use postgres to store the data. It will expose a REST API for server management and a gRPC API for inter-service communication.
+
+This service will be responsible for writing the data in the Permify database. It will be called when the following operation are performed a user:
+- join a server
+- leave a server
+- is assigned a Server-wide & Application-wide role
+- is removed from a Server-wide & Application-wide role
+- is muted
+- is unmuted
+- is banned
+- is kicked
+- is invited to a server
+- is removed from a server
+- is assigned a role in a server
+
+The service will do a lot of call to the Permify service to check if the user is allowed to perform the action.
+
+A channel can be linked to a server. Otherwise it will be a direct message channel.
+Inside a server, a channels can have multiple types:
+
+- text channel: a simple channel to send messages in
+- conference channel: a channel where authorized users can join a voice channel to communicate with each other
+- thread: a thread is a sub-channel of a channel. It allows users to discuss a specific topic without cluttering the main channel. Threads can be created within text channels by referencing a message. 
+- category: a category is a way to group channels together. It allows users to organize their channels and make it easier to find them. Categories can be created within servers and can contain multiple channels.
+
+In a server, the authorized users can create role with different permissions: 
+- administrator: will inherit all the permissions of the server
+- server manager: can perform all the actions on the server
+- role manager: can perform all the actions on the roles and add people to roles
+- channel manager: can create all kind of channels and manage the channels
+- channel viewer: can see the channels and the messages of the channels
+- webhook manager: can create webhooks to send messages to other services
+- nickname manager: can manage the nicknames of the users
+
+
+Those permission can be assigned to a role and the role to a member of the server.
+
+==== Messages & Search 
+
+The message service is responsible for managing messages in channels. It handles message-related operations such as sending, receiving, and deleting messages.
+It also manages message history, search functionality, and webhooks for real-time notifications.
+It will expose a REST API for message management and a gRPC API for inter-service communication.
+The message service will do not need all lot of relation constraint. It will be able to store the messages in a NoSQL database.
+
+The message service rely on a MongoDB database to store the messages. MongoDB is a NoSQL database that provides a flexible and scalable way to store and retrieve data. It is well-suited for storing messages and allows for efficient querying and indexing.
+
+MongoDB provide rich features for indexing and performing full-text search.
+The indexation will be done on the file name if the message contains a file and on the content of the message. 
+
+[source,go]
+----
+type File struct {
+	ID         primitive.ObjectID `bson:"_id,omitempty"`
+	Filename   string             `bson:"filename"`
+	Mimetype   string             `bson:"mimetype"`
+	Size       int64              `bson:"size"`
+	StorageKey string             `bson:"storageKey"`
+	UploaderID primitive.ObjectID `bson:"uploaderId"`
+	UploadDate time.Time          `bson:"uploadDate"`
+}
+
+type Message struct {
+	ID          primitive.ObjectID   `bson:"_id,omitempty"`
+	SenderID    primitive.ObjectID   `bson:"senderId"`
+	ChannelID   primitive.ObjectID   `bson:"channelId"`
+	Content     string               `bson:"content"`
+	CreatedAt   time.Time            `bson:"createdAt"`
+	Attachments []primitive.ObjectID `bson:"attachments"`
+}
+----
+
+In the case a user want perform search in one channel, could be a direct message channel or a server channel, we will only need to filter the messages by the channel id.
+
+In the case a user want to perform a search in all the channels of a server, we will need to filter the messages by asking all the channels the user has access on the server.
+
+[red]#NOTE: Detail the link to the s3 files#
+
+Also messages will be able to hold a link to a file to manage the attachments. This url will only be a link to the file in the subdirectory dedicated to the message service.
+
+[red]#NOTE: Detail the link to the s3 files#
+
 
 ==== Authorization
+
+The authorization service will hold the logic that can be used to manage the data in the Permify database. This service will be callable with a GRPC api.
+Permify leverages a Postgres database to store the data. It will be used to store the roles and the permissions of the users.
 
 .Create a message in a channel of a server and check the authorization
 image::security/sequence_auth.png[]
 
+Other services will need to store the data in the Permify database. This service will be called when the following operation are performed. Therefore permify will be able to enforce the rules on the data.
+Only then all the services in the application will be able to verify requests against the data in the Permify database.
 
-==== Servers
+==== Voice channel communication
 
-==== Channels
 
-==== Messages
+=== Deployment
 
-==== Webhooks 
+All services will be deployed across multiple Kubernetes clusters to improve fault tolerance and ensure high availability. Each service will reside in its own namespace, allowing for independent resource management. 
+The clusters will be deployed on Virtual Machines (VMs) to provide flexibility and scalability. We will use Proxmox VE as the hypervisor to manage the VMs, allowing us to create and manage multiple virtual machines on a single physical server.
 
-=== Backuping
+==== Kubernetes
+
+The entire infrastructure will run on Kubernetes, divided into two clusters: one for services and another for databases. Services will be isolated within their own namespaces to ensure independent resource management and high availability. Helm charts will facilitate deployment by simplifying configuration, packaging, and dependency handling.
+
+The clusters will be deployed on Virtual Machines with the Talos linux distribution. Talos is a modern, immutable Linux distribution designed specifically for Kubernetes. It provides a lightweight and secure environment for running Kubernetes clusters, making it an ideal choice for our application.
+
+The cluster dedicated for services will expose listen for traffic on port 443 for HTTPS and port 80 for HTTP. It will allow the user to access the web application and the API. 
+
+In order to provide a high availability of the application, we will deploy 3 control nodes per cluster which is the link:https://www.siderolabs.com/blog/why-should-a-kubernetes-control-plane-be-three-nodes/[recommended configuration by Talos maintainers].
+The control plane nodes will be responsible for managing the Kubernetes cluster and ensuring that the services are running smoothly.
+
+The worker nodes will be responsible for running the services and the databases. For the databases, we want to ensure a high availability and fault tolerance.
+We will deploy 3 worker nodes per cluster. This will allow us to have a high availability of the services and the databases. We will see later how to leverage the Kubernetes operators to manage the databases and high availability.
+
+In order to increase the fault tolerance we will use longhorn to manage the storage of the services. Longhorn is a cloud-native distributed block storage solution for Kubernetes. It allows to the replication of the data across multiple nodes. Also it provides tools to backup the kubernetes volumes and to restore them in case of failure.
+
+==== Packaging, deploying services
+
+Each service will be packaged as a Docker image, allowing for easy deployment and scaling. The images will be stored in a private Docker registry to ensure security and control over the deployment process.
+Then the images will be deployed to the Kubernetes cluster using Helm charts. Helm charts will simplify the deployment process by providing a standardized way to package and deploy applications on Kubernetes.
+All the charts of the services will be stored inside a registry dedicated to the charts.
+
+We will use a GitOps approach to manage the deployment of services. This means that all the configuration files and Helm charts will be stored in a Git repository. That is why it is important to have convention for the naming of the docker images. 
+We will use the SemVer convention for the naming of the docker images such as `beep-api:1.0.0`. 
+
+.SemVer Overview
+Semantic Versioning (SemVer) is a versioning scheme for software that conveys meaning about the underlying changes. A version number is structured as `MAJOR.MINOR.PATCH`:
+
+- **MAJOR**: Incremented when incompatible API changes are introduced.
+- **MINOR**: Incremented when functionality is added in a backward-compatible manner.
+- **PATCH**: Incremented when backward-compatible bug fixes are made.
+
+For example:
+- `1.0.0`: Initial stable release.
+- `1.1.0`: Adds new features in a backward-compatible way.
+- `1.1.1`: Fixes bugs without breaking existing functionality.
+
+By adhering to SemVer, we ensure clear communication of changes and compatibility between versions, which is critical for managing microservices in a distributed architecture.
+
+==== Deploying databases
+
+We will deploy databases in a separate Kubernetes cluster to ensure isolation and security. 
+Even though it is often advised to deploy databases on bare metal instances, Kubernetes provides a flexible and scalable environment for managing databases. Futhermore, a lot of tools are available to manage databases in Kubernetes.
+Each database will be deployed using a Kubernetes operator, which simplifies the management and scaling of databases in a Kubernetes environment.
+
+A lot of databases will be used in the application. And they all provide a way kubernetes operator to deploy the database:
+
+- link:https://github.com/mongodb/mongodb-kubernetes-operator/blob/master/README.md[MongoDB Community Operator]
+- link:https://cloudnative-pg.io/[Postgres Operator]
+- link:https://min.io/docs/minio/kubernetes/upstream/operations/installation.html[Minio Operator]
+
+Some services will need some cache. For that we will use the link:https://operatorhub.io/operator/redis-operator[Redis operator].
+
+Each instance of databases will be deployed on it's own kubernetes node.
+
+In order to scale the databases and allow high availability, we will use the following configuration:
+
+- MongoDB: 3 replicas with sharding enabled
+- Postgres: 3 replicas with streaming replication enabled
+- Minio: 3 replicas with erasure coding enabled
+- Redis: 3 replicas with clustering enabled
+
+We will need:
+- Each database 
+
+==== ArgoCD
+
+ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes. It allows us to manage the deployment of applications and services in a Kubernetes cluster using Git as the source of truth.
+ArgoCD will be used to manage the deployment of services and databases in the Kubernetes cluster. 
+It will monitor the Git repository for changes and automatically deploy the updated configuration to the cluster. 
+This ensures that the deployment process is consistent and repeatable, reducing the risk of errors and improving reliability.
+
+The instance will be deployed in the Kubernetes cluster that will host the databases.
+
+We will store all the configuration values.yaml files of the services in a Git repository. Each services will have its own folder in the repository. The values file will contain the version of the docker image to deploy and the configuration values of the service:
+
+```yaml
+image:
+  repository: beep-api
+  tag: 1.0.0
+```
+
+When a service is updated, a pipeline will be triggered to build the Docker image and push it to the Docker registry. 
+The pipeline will also update the values.yaml file in the Git repository with the new version of the Docker image. As ArgoCD is monitoring the Git repository, it will automatically deploy the updated configuration to the Kubernetes cluster.
+
+
+=== Clusters  
+
+As described before, we will  need to deploy two kubernetes clusters. One for the services and one for the databases.
+
+
+
 
 === Monitoring
+==== Alerting
+==== Logging
+==== Tracing
+
+=== Backuping
 
 
