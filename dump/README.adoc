@@ -16,3 +16,5 @@ Network waf
 Monitoring Alerting
 Secret management with vault ?
 Throtthling on messages
+
+specify dns 

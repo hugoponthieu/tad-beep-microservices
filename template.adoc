@@ -369,67 +369,6 @@ Microservices implies some networking constraints such as securing a flow of dat
 
 For that task we will use Istio as a service mesh. It will allow us to manage the networking of the services in a more efficient way.
 
-==== Service Mesh Overview
-
-A service mesh is a dedicated infrastructure layer that provides service-to-service communication, observability, and security for microservices applications. It abstracts the network and provides a set of features that simplify the development and operation of microservices.
-
-Service mesh provides the following benefits:
-
-- Traffic management: control the flow of traffic between services, implement routing rules, and perform load balancing.
-- Security: provides encryption, authentication, and authorization to secure communication between services.
-- Observability: provides metrics, logging, and tracing to monitor the performance and health of services.
-
-==== Istio Overview
-
-Istio is an open-source implementation of a service mesh that provides advanced networking features for microservices applications. 
-It integrates with Kubernetes and provides a set of tools to manage service-to-service communication, security, and observability.
-
-One of the key advantages of using Istio is that it is actively developed and maintained by a well-known and reputable community. This ensures that the project remains up-to-date with the latest features, security patches, and best practices. As a result, Istio is a reliable and robust choice for a microservices project that is intended to last over time.
-
-One of the main component of Istio is the data plane that will be used to manage the traffic between the services.
-It will be composed of Envoy proxies that will be deployed alongside the services.
-All the traffic coming and leaving a pod is redirected to the Envoy proxy that will manage the traffic.
-This will allow to implement a lot of traffic related features such as load balancing, retries, timeouts, and circuit breaking. 
-
-Via proxies Istio is capable to log, trace and monitor natively and seamlessly  the traffic between the services. This will allow to have a better observability of the application.
-
-As describe, Istio will allow us to manage a lot of constraints outside of the services and let the services focus on their core functionalities. 
-It is really suitable to delegate the networking constraints to a dedicated service that will manage them in a more efficient way.
-
-==== mTLS (Mutual TLS)
-
-Mutual Transport Layer Security (mTLS) is a security protocol that provides encryption, authentication, and integrity for communication between services. 
-It ensures that only trusted services can communicate with each other and that the data exchanged between services is secure.
-
-In our application, we will use mTLS to secure communication between services and prevent unauthorized access to sensitive data. By enabling mTLS, we can ensure that all communication between services is encrypted and authenticated, reducing the risk of data breaches and unauthorized access.
-
-Istio provides built-in support for mTLS and makes it easy to enable mTLS for all services in the mesh.
-
-[red]#NOTE: SCHEME OF THE PROXIES WITH MTLS#
-
-==== Gateway and Securing with TLS
-
-Istio Gateway is a component that manages inbound and outbound traffic for services in the mesh. It acts as an entry point for external traffic and provides features such as load balancing, routing, and security.
-
-In our application, we will use Istio Gateway to manage external traffic and secure communication with clients.
-By configuring Istio Gateway with Transport Layer Security (TLS), we can encrypt traffic between clients and services, ensuring that data is secure in transit.
-
-Istio Gateway provides built-in support for TLS and makes it easy to configure TLS settings for services in the mesh. 
-By enabling TLS on Istio Gateway, we can secure communication with clients and protect sensitive data from eavesdropping and tampering.
-
-[red]#NOTE: SCHEME OF THE GATEWAY#
-
-==== Circuit Breaking
-
-Circuit breaking is a design pattern that prevents cascading failures in distributed systems. 
-It works by monitoring the health of services and breaking the circuit if a service becomes unresponsive or slow.
-
-In our application, we will use circuit breaking to ensure service reliability and prevent service degradation. 
-By implementing circuit breaking in Istio, we can detect and isolate failing services, preventing them from affecting other services in the mesh.
-
-
-[red]#NOTE: SCHEME CIRCUIT BREAKING#
-
 
 === Protocols
 
@@ -495,6 +434,20 @@ Keycloak will rely on a Postgres database to store the data.
 [red]#NOTE: SCHEMA OF THE KEYCLOAK DATABASE#
 
 
+[source,go]
+----
+type User struct {
+	ID        	  	 string
+	Username  	  	 string
+	ProfilePicture   string
+	Email     		 string
+	FirstName 		 string
+	LastName  		 string
+	Password  		 string
+}
+----
+
+
 ==== File storage
 
 The file storage service is responsible for managing file uploads and downloads. It handles file-related operations such as uploading, downloading, and deleting files.
@@ -505,45 +458,91 @@ The file storage service will use the Minio API to manage the files. It will sto
 
 Each service will have its own path to store the files. The file storage service will use a unique prefix for each service to avoid conflicts. For example, the user service will store files in the `user` prefix, while the message service will store files in the `message` prefix.
 
-==== Servers 
+==== Server service 
 
 A lot of objects have strong relation with servers. That is why the server service will be responsible for managing servers,members, roles, channels, and webhooks.
 The server service will use postgres to store the data. It will expose a REST API for server management and a gRPC API for inter-service communication.
 
-This service will be responsible for writing the data in the Permify database. It will be called when the following operation are performed a user:
-- join a server
-- leave a server
-- is assigned a Server-wide & Application-wide role
-- is removed from a Server-wide & Application-wide role
-- is muted
-- is unmuted
-- is banned
-- is kicked
-- is invited to a server
-- is removed from a server
-- is assigned a role in a server
+// This service will be responsible for writing the data in the Permify database. It will be called when the following operation are performed a member of a server:
+// - join a server
+// - leave a server
+// - is assigned a Server-wide & Application-wide role
+// - is removed from a Server-wide & Application-wide role
+// - is muted
+// - is unmuted
+// - is banned
+// - is kicked
+// - is invited to a server
+// - is removed from a server
+// - is assigned a role in a server
 
-The service will do a lot of call to the Permify service to check if the user is allowed to perform the action.
+The service will do a lot of call to the Permify service to check if the member is allowed to perform the action.
+
+A direct messages channel is a channel that is not linked to a server. It allows users to communicate with each other without being part of a server. In order, to interact with a direct message channel, the user will need to be a member of the channel. All member of a channel will have the same rights and it can't be changed.
 
 A channel can be linked to a server. Otherwise it will be a direct message channel.
 Inside a server, a channels can have multiple types:
 
 - text channel: a simple channel to send messages in
-- conference channel: a channel where authorized users can join a voice channel to communicate with each other
-- thread: a thread is a sub-channel of a channel. It allows users to discuss a specific topic without cluttering the main channel. Threads can be created within text channels by referencing a message. 
-- category: a category is a way to group channels together. It allows users to organize their channels and make it easier to find them. Categories can be created within servers and can contain multiple channels.
+- conference channel: a channel where authorized member can join a voice channel to communicate with each other
+- thread: a thread is a sub-channel of a channel. It allows member to discuss a specific topic without cluttering the main channel. Threads can be created within text channels by referencing a message. A thread can only created inside a text channel.
+- category: a category is a way to group channels together. It allows members to organize their channels and make it easier to find them. Categories can be created within servers and can contain multiple channels.
 
-In a server, the authorized users can create role with different permissions: 
-- administrator: will inherit all the permissions of the server
-- server manager: can perform all the actions on the server
-- role manager: can perform all the actions on the roles and add people to roles
-- channel manager: can create all kind of channels and manage the channels
-- channel viewer: can see the channels and the messages of the channels
-- webhook manager: can create webhooks to send messages to other services
-- nickname manager: can manage the nicknames of the users
+In a server, the authorized members can create role with different permissions: 
+
+- manage server: allows performing all actions on the server
+- manage roles: allows performing all actions on roles and assigning roles to members
+- manage channels: allows creating and managing all types of channels
+- send messages: allows sending messages in channels
+- manage messages: allows deleting and pinning messages
+- view channels: allows viewing channels and their messages
+- manage webhooks: allows creating and managing webhooks to send messages to other services
+- manage nicknames: allows managing the nicknames of members
+- full server access: inherits all permissions within the server
 
 
 Those permission can be assigned to a role and the role to a member of the server.
+Futhermore for a channel in a server, we can remove or give some permissions to a member or a role on a channel. This will concern:
+
+- view channel
+- manage channel
+- manage webhooks
+- manage permissions
+- send messages
+- manage messages
+
+Those restrictions or permissions will be prioritized over the server permissions.
+In order to atomically manage the permissions, like this we will need to store overriding permissions in the database. A permission overwrite should be like this:
+
+[source,go]
+----
+type PermissionOverwrite struct {
+	ID        int      `json:"id"`
+	ChannelID string   `json:"channel_id"`
+	RoleID    *string  `json:"role_id,omitempty"`
+	UserID    *string  `json:"member_id,omitempty"`
+	Allow     []string `json:"allow"`
+	Deny      []string `json:"deny"`
+}
+----
+
+As you can see the user id and the role id can be null but they cannot be both null.
+
+In order to enforce the rules and list correctly the objects for a member the data will be duplicated, on one hand in the Postgres database of the server service and on the other hand in the Permify database of the authorization service.
+This will allow us to enforce the rules when a member is trying to perform an action on a resource, for example sending a message in a channel. It will also allow us to list the objects for a member. For example, listing the channels of a server for a member.
+
+As we can use message queues to send messages to other services, we will make direct grpc calls to the authorization service to replicate the data in the Permify database.
+
+The server service will also be responsible for managing the webhooks of a server. A webhook is a way for a third party client to send messages inside a channel of a server. A webhook is linked to a channel and can be used to send messages to that channel.
+There will be some considerations to take into account when creating a webhook like the authentication of the webhook.
+In order to authenticate the webhook, we will use a token that will be generated when creating the webhook. This token will be used to authenticate the webhook when sending messages to the channel. The token will be stored in the database and will be used to authenticate the webhook.
+The token will be a jwt containing the id of the webhook and the channel id. The token will be signed with a secret key that would be unique for the whole service.
+
+===== Throttling Mechanism
+
+To prevent abuse on the system and ensure the stability of the server service, a throttling mechanism will be implemented.
+We need to limit users to be part to a maximum of 50 servers. This means a user cannot join more than 50 servers and if he tries to join or create a server, the request will be rejected. 
+
 
 ==== Messages & Search 
 
@@ -552,9 +551,9 @@ It also manages message history, search functionality, and webhooks for real-tim
 It will expose a REST API for message management and a gRPC API for inter-service communication.
 The message service will do not need all lot of relation constraint. It will be able to store the messages in a NoSQL database.
 
-The message service rely on a MongoDB database to store the messages. MongoDB is a NoSQL database that provides a flexible and scalable way to store and retrieve data. It is well-suited for storing messages and allows for efficient querying and indexing.
+The message service relies on a MongoDB database to store the messages. MongoDB is a NoSQL database that provides a flexible and scalable way to store and retrieve data. It is well-suited for storing messages and allows for efficient querying and indexing.
 
-MongoDB provide rich features for indexing and performing full-text search.
+MongoDB provides rich features for indexing and performing full-text search.
 The indexation will be done on the file name if the message contains a file and on the content of the message. 
 
 [source,go]
@@ -576,19 +575,77 @@ type Message struct {
 	Content     string               `bson:"content"`
 	CreatedAt   time.Time            `bson:"createdAt"`
 	Attachments []primitive.ObjectID `bson:"attachments"`
+	Pinned      bool                 `bson:"pinned"`
+	Type        int64                `bson:"type"`
 }
 ----
 
-In the case a user want perform search in one channel, could be a direct message channel or a server channel, we will only need to filter the messages by the channel id.
+In the case a user wants to perform a search in one channel, which could be a direct message channel or a server channel, we will only need to filter the messages by the channel id.
 
-In the case a user want to perform a search in all the channels of a server, we will need to filter the messages by asking all the channels the user has access on the server.
+In the case a user wants to perform a search in all the channels of a server, we will need to filter the messages by asking all the channels the user has access to on the server. Therefore, with all the searchable channels, we will be able to only filter the messages by the channel ids. In order to limit the number of calls and queries to the database and to other services, we can cache the list of channels the user has access to on the server inside Redis.
+There are some concerns to have when caching this data inside Redis:
+- The data can quickly become stale.
+- The data can be too big to store in Redis.
+
+To address the first concern, we can set a TTL (Time To Live) on the cache. This will ensure that the data is refreshed after a certain period of time. Keeping the data for only 1 minute should be sufficient to keep the data up to date. 
+In fact, the first search request will be slower but should not exceed 1 second.
+
+To address the second concern, we can limit the number of channels that are stored in Redis. We can store only the channels that are used frequently. This will ensure that the data is not too big to store in Redis.
 
 [red]#NOTE: Detail the link to the s3 files#
 
-Also messages will be able to hold a link to a file to manage the attachments. This url will only be a link to the file in the subdirectory dedicated to the message service.
+Also, messages will be able to hold a link to a file to manage the attachments. This URL will only be a link to the file in the subdirectory dedicated to the message service.
 
 [red]#NOTE: Detail the link to the s3 files#
 
+Messages can be also sent by the system to notify the users that something happened in a server or in the channel. Can be sent by any service that is authorized to do so. The message will have as sender the user that perform the action. The types of messages that can be sent are:
+
+- message: a simple message
+- pinning: a message that is pinned
+- thread creation: a thread has been created in the channel
+- conference creation: a conference has been created in the channel
+- user joined: a user has joined the channel
+
+This will allow to inform the users of the actions that are performed in the channel.
+
+===== Throttling Mechanism
+
+To prevent abuse and ensure the stability of the message service, a throttling mechanism will be implemented. Without such a mechanism, the service could be easily attacked by sending a large number of requests in a short period, potentially overwhelming the system and degrading its performance.
+
+The throttling mechanism will enforce a limit of 10 messages per user every 10 seconds. This ensures that users cannot flood the service with excessive requests while still allowing legitimate usage.
+
+To implement this, Redis will be used to store the rate-limiting information. Redis is well-suited for this task due to its low latency and support for atomic operations. The following approach will be used:
+
+1. When a user sends a message, the service will check Redis for the user's message count within the current 10-second window.
+2. If the user has already sent 10 messages in the current window, the service will reject the request with a "Too Many Requests" response.
+3. If the user has not reached the limit, the service will increment the message count in Redis and allow the request to proceed.
+4. Redis keys for rate-limiting will have a TTL of 10 seconds, ensuring that the count resets automatically after the window expires.
+
+This mechanism will ensure fair usage of the service while protecting it from abuse.
+
+[source,pseudocode]
+----
+function isRateLimited(userID, redisClient):
+	key = "rate_limit:" + userID
+	count = getValueFromRedis(redisClient, key)
+
+	if errorOccurred(count) and errorIsNotKeyNotFound():
+		logError("Error checking rate limit")
+		return false
+
+	if count >= 10:
+		return true
+
+	beginTransaction(redisClient):
+		incrementValueInRedis(key)
+		setExpirationForKey(key, 10 seconds)
+	endTransaction()
+
+	if errorOccurredDuringTransaction():
+		logError("Error updating rate limit")
+
+	return false
+----
 
 ==== Authorization
 
@@ -624,6 +681,80 @@ The worker nodes will be responsible for running the services and the databases.
 We will deploy 3 worker nodes per cluster. This will allow us to have a high availability of the services and the databases. We will see later how to leverage the Kubernetes operators to manage the databases and high availability.
 
 In order to increase the fault tolerance we will use longhorn to manage the storage of the services. Longhorn is a cloud-native distributed block storage solution for Kubernetes. It allows to the replication of the data across multiple nodes. Also it provides tools to backup the kubernetes volumes and to restore them in case of failure.
+
+==== Service Mesh Overview
+
+A service mesh is a dedicated infrastructure layer that provides service-to-service communication, observability, and security for microservices applications. It abstracts the network and provides a set of features that simplify the development and operation of microservices.
+
+Service mesh provides the following benefits:
+
+- Traffic management: control the flow of traffic between services, implement routing rules, and perform load balancing.
+- Security: provides encryption, authentication, and authorization to secure communication between services.
+- Observability: provides metrics, logging, and tracing to monitor the performance and health of services.
+
+==== Istio Overview
+
+Istio is an open-source implementation of a service mesh that provides advanced networking features for microservices applications. 
+It integrates with Kubernetes and provides a set of tools to manage service-to-service communication, security, and observability.
+
+One of the key advantages of using Istio is that it is actively developed and maintained by a well-known and reputable community. This ensures that the project remains up-to-date with the latest features, security patches, and best practices. As a result, Istio is a reliable and robust choice for a microservices project that is intended to last over time.
+
+One of the main component of Istio is the data plane that will be used to manage the traffic between the services.
+It will be composed of Envoy proxies that will be deployed alongside the services.
+All the traffic coming and leaving a pod is redirected to the Envoy proxy that will manage the traffic.
+This will allow to implement a lot of traffic related features such as load balancing, retries, timeouts, and circuit breaking. 
+
+Via proxies Istio is capable to log, trace and monitor natively and seamlessly  the traffic between the services. This will allow to have a better observability of the application.
+
+As describe, Istio will allow us to manage a lot of constraints outside of the services and let the services focus on their core functionalities. 
+It is really suitable to delegate the networking constraints to a dedicated service that will manage them in a more efficient way.
+
+==== mTLS (Mutual TLS)
+
+Mutual TLS (mTLS) is a security protocol that encrypts and authenticates communication between services, ensuring only trusted services can interact. 
+Istio simplifies enabling mTLS across all services in the mesh, enhancing security and preventing unauthorized access.
+
+==== Deployment kind
+
+As we will have 2 clusters, one for the services and one for the databases, we will need to deploy Istio in both clusters. Istio manages this case by deploying a control plane in each cluster. It will allow to have the same configuration in both clusters and to manage the traffic between the clusters.
+This deployment style is called multi-primary and therefore all Istio features will be available between the clusters. 
+
+==== Gateway and Securing with TLS
+
+Istio Gateway is a component that manages inbound and outbound traffic for services in the mesh. It acts as an entry point for external traffic and provides features such as load balancing, routing, and security.
+
+// Documentation Comment:
+
+// This section explains the integration of Cert-Manager with an external Certificate Authority (CA),
+// such as Let's Encrypt, to automate the issuance and renewal of TLS certificates for Istio Gateway.
+// It highlights how Cert-Manager manages the certificate lifecycle and injects certificates into Istio's ingress gateway,
+// ensuring secure and encrypted communication between clients and services.
+
+// NOTE: [red]#Include a schema here to visually represent the workflow. The schema should illustrate:
+// - Cert-Manager requesting certificates from the external CA (e.g., Let's Encrypt).
+// - Cert-Manager renewing and managing the certificates.
+// - Certificates being injected into Istio's ingress gateway.
+// - Secure communication between clients and services using the certificates.#
+
+In our application, we will use Istio Gateway to manage external traffic and secure communication with clients. To achieve this, we will integrate Cert-Manager with an external Certificate Authority (CA) such as Let's Encrypt to automate the issuance and renewal of TLS certificates.
+
+Cert-Manager will handle the certificate lifecycle, including requesting, renewing, and injecting certificates into Istio's ingress gateway. By configuring Istio Gateway to use these certificates, we can ensure encrypted communication between clients and services, protecting sensitive data from eavesdropping and tampering.
+
+This approach simplifies certificate management while leveraging a trusted CA like Let's Encrypt to provide secure and reliable TLS for our application.
+
+[red]#NOTE: SCHEME OF THE GATEWAY#
+
+==== Circuit Breaking
+
+Circuit breaking is a design pattern that prevents cascading failures in distributed systems. 
+It works by monitoring the health of services and breaking the circuit if a service becomes unresponsive or slow.
+
+In our application, we will use circuit breaking to ensure service reliability and prevent service degradation. 
+By implementing circuit breaking in Istio, we can detect and isolate failing services, preventing them from affecting other services in the mesh.
+
+
+[red]#NOTE: SCHEME CIRCUIT BREAKING#
+
 
 ==== Packaging, deploying services
 
@@ -693,13 +824,6 @@ image:
 
 When a service is updated, a pipeline will be triggered to build the Docker image and push it to the Docker registry. 
 The pipeline will also update the values.yaml file in the Git repository with the new version of the Docker image. As ArgoCD is monitoring the Git repository, it will automatically deploy the updated configuration to the Kubernetes cluster.
-
-
-=== Clusters  
-
-As described before, we will  need to deploy two kubernetes clusters. One for the services and one for the databases.
-
-
 
 
 === Monitoring
