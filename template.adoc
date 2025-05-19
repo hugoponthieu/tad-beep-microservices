@@ -46,7 +46,7 @@ And of course there will be more fined grained authorization on resources that w
 
 ==== Account
 
-We will begin like if a user just discrovers the application. He will be able to access the application as a guest user.
+We will begin like if a user just discovers the application. He will be able to access the application as a guest user.
 
 As a guest user I want to be able to sign up using:
 
@@ -333,31 +333,6 @@ Roles in the application are categorized into two types:
 
 Both types of roles will be used to implement fine-grained access control policies.
 
-===== Permify
-
-Permify implement Authorization as a Service. It will be used to manage the roles and the permissions of the users.
-
-Permify exposes an REST and a GRPC api that contain the same endpoints. We will use the GRPC api to communicate with the service as it is lighter for communication between services.
-
-When performing an action on a resource, the service will check if the user has the required role to perform the action. This is a purely binary response, either the user is allowed or not.
-
-====== Data management
-
-Permify hold the data in a Postgres database. It will be used to store the roles and the permissions of the users.
-We will therefore need to replicates the data in the Permify database.
-
-We will develop a service that hold the logic that can be used to manage the data in the Permify database. This service will be callable with a GRPC api.
-This service will be called when the following operation are performed:
-- a user join a server
-- a user leave a server
-- a user is assigned a Server-wide & Application-wide role 
-- a user is removed from a Server-wide & Application-wide role
-- a user is muted
-- a user is unmuted
-- a user is banned
-- a user is kicked
-
-The service will therefore hold the data and will be able to enforce the rules on the data.
 
 == Implementation
 
@@ -425,9 +400,11 @@ The user service is responsible for managing user accounts, including registrati
 It also manages user preferences, settings, and security features like password resets and two-factor authentication.
 It will expose a REST API for user management and a gRPC API for inter-service communication.
 
-The user service will rely on Keycloak. In fact all the data will be stored in the Keycloak database. and we will use the Keycloak API to manage the users.
+The user service will rely on Keycloak. In fact all the data will be stored in the Keycloak database. And we will use the Keycloak API to manage the users.
 
 Therefore keycloak will be hold the datas for the all the users of the application. And all the services will enforce the authentication of users through the Keycloak API.
+It will need to be callable by all the other services in the application in order to allow connection.
+We will use one keycloak realm for the whole application and create seperate clients if needed for the services. If a service needs to enforce the authentication of a user, it will need to call the Keycloak API to get the public certficate to verify token. 
 
 Keycloak will rely on a Postgres database to store the data.
 
@@ -447,6 +424,17 @@ type User struct {
 }
 ----
 
+The user service will also be responsible for managing friendships between users. It will handle friend-related operations such as sending, accepting, and rejecting friend requests.
+When a friendship is created, a channel will be created between the two users. This channel will be a direct message channel, allowing the two users to communicate with each other.
+In order to be friend with a user, the user will need to send a friend request to the other user. The other user will be able to accept or reject the friend request. If the friend request is accepted, a channel will be created between the two users.
+In order to make the friend request, the user will need to know the username of the other user. The username will be unique for each user. The user will be able to search for users by their username.
+All user should also be able to ask for another user to be friend by cliking on the user profile, for example in a server.
+
+[red]#NOTE: SCHEMA OF THE FRIENDSHIP SYSTEM#
+
+[red]#NOTE: SEQUENCE DIAGRAM FOR FRIEND REQUEST WORKFLOW#
+
+[red]#NOTE: SCHEMA OF THE DIRECT MESSAGE CHANNEL CREATION#
 
 ==== File storage
 
@@ -460,59 +448,46 @@ Each service will have its own path to store the files. The file storage service
 
 ==== Server service 
 
-A lot of objects have strong relation with servers. That is why the server service will be responsible for managing servers,members, roles, channels, and webhooks.
-The server service will use postgres to store the data. It will expose a REST API for server management and a gRPC API for inter-service communication.
+The server service will be responsible for managing servers, members, roles, channels, and webhooks. It will use Postgres to store the data and expose a REST API for server management and a gRPC API for inter-service communication.
 
-// This service will be responsible for writing the data in the Permify database. It will be called when the following operation are performed a member of a server:
-// - join a server
-// - leave a server
-// - is assigned a Server-wide & Application-wide role
-// - is removed from a Server-wide & Application-wide role
-// - is muted
-// - is unmuted
-// - is banned
-// - is kicked
-// - is invited to a server
-// - is removed from a server
-// - is assigned a role in a server
+This service will also handle writing data to the Permify database. It will be invoked for the following operations involving server members:
+- Joining or leaving a server
+- Assigning or removing Server-wide & Application-wide roles
+- Muting or unmuting members
+- Banning or kicking members
+- Inviting or removing members from a server
+- Assigning roles within a server
 
-The service will do a lot of call to the Permify service to check if the member is allowed to perform the action.
+The service will frequently interact with the Permify service to verify if a member is authorized to perform specific actions.
 
-A direct messages channel is a channel that is not linked to a server. It allows users to communicate with each other without being part of a server. In order, to interact with a direct message channel, the user will need to be a member of the channel. All member of a channel will have the same rights and it can't be changed.
+Direct message channels are independent of servers and allow users to communicate without being part of a server. To interact with a direct message channel, users must be members of the channel. All members of a direct message channel have equal permissions, which cannot be modified.
 
-A channel can be linked to a server. Otherwise it will be a direct message channel.
-Inside a server, a channels can have multiple types:
+Channels within a server can have the following types:
+- **Text Channel**: A basic channel for sending messages.
+- **Conference Channel**: A voice channel where authorized members can communicate.
+- **Thread**: A sub-channel within a text channel, created to discuss specific topics without cluttering the main channel. Threads are tied to a message in a text channel.
+- **Category**: A grouping mechanism for organizing channels within a server.
 
-- text channel: a simple channel to send messages in
-- conference channel: a channel where authorized member can join a voice channel to communicate with each other
-- thread: a thread is a sub-channel of a channel. It allows member to discuss a specific topic without cluttering the main channel. Threads can be created within text channels by referencing a message. A thread can only created inside a text channel.
-- category: a category is a way to group channels together. It allows members to organize their channels and make it easier to find them. Categories can be created within servers and can contain multiple channels.
+Authorized members in a server can create roles with various permissions, such as:
+- Managing the server
+- Managing roles and assigning them to members
+- Managing channels
+- Sending messages
+- Managing messages (e.g., deleting or pinning)
+- Viewing channels
+- Managing webhooks
+- Managing nicknames
+- Full server access (inherits all permissions)
 
-In a server, the authorized members can create role with different permissions: 
+Permissions can be assigned to roles, and roles can be assigned to server members. Additionally, channel-specific permissions can override server-level permissions for roles or individual members. These channel-specific permissions include:
+- Viewing the channel
+- Managing the channel
+- Managing webhooks
+- Managing permissions
+- Sending messages
+- Managing messages
 
-- manage server: allows performing all actions on the server
-- manage roles: allows performing all actions on roles and assigning roles to members
-- manage channels: allows creating and managing all types of channels
-- send messages: allows sending messages in channels
-- manage messages: allows deleting and pinning messages
-- view channels: allows viewing channels and their messages
-- manage webhooks: allows creating and managing webhooks to send messages to other services
-- manage nicknames: allows managing the nicknames of members
-- full server access: inherits all permissions within the server
-
-
-Those permission can be assigned to a role and the role to a member of the server.
-Futhermore for a channel in a server, we can remove or give some permissions to a member or a role on a channel. This will concern:
-
-- view channel
-- manage channel
-- manage webhooks
-- manage permissions
-- send messages
-- manage messages
-
-Those restrictions or permissions will be prioritized over the server permissions.
-In order to atomically manage the permissions, like this we will need to store overriding permissions in the database. A permission overwrite should be like this:
+To manage these permissions atomically, permission overrides will be stored in the database. A permission override structure might look like this:
 
 [source,go]
 ----
@@ -526,17 +501,28 @@ type PermissionOverwrite struct {
 }
 ----
 
-As you can see the user id and the role id can be null but they cannot be both null.
+The `RoleID` and `UserID` fields can be null, but not both simultaneously.
 
-In order to enforce the rules and list correctly the objects for a member the data will be duplicated, on one hand in the Postgres database of the server service and on the other hand in the Permify database of the authorization service.
-This will allow us to enforce the rules when a member is trying to perform an action on a resource, for example sending a message in a channel. It will also allow us to list the objects for a member. For example, listing the channels of a server for a member.
+To enforce rules and list objects for a member, data will be duplicated in both the Postgres database of the server service and the Permify database of the authorization service. This duplication ensures that rules are enforced when members perform actions (e.g., sending a message in a channel) and allows listing objects for members (e.g., listing channels in a server).
 
-As we can use message queues to send messages to other services, we will make direct grpc calls to the authorization service to replicate the data in the Permify database.
+Instead of using message queues, direct gRPC calls will be made to the authorization service to replicate data in the Permify database.
 
-The server service will also be responsible for managing the webhooks of a server. A webhook is a way for a third party client to send messages inside a channel of a server. A webhook is linked to a channel and can be used to send messages to that channel.
-There will be some considerations to take into account when creating a webhook like the authentication of the webhook.
-In order to authenticate the webhook, we will use a token that will be generated when creating the webhook. This token will be used to authenticate the webhook when sending messages to the channel. The token will be stored in the database and will be used to authenticate the webhook.
-The token will be a jwt containing the id of the webhook and the channel id. The token will be signed with a secret key that would be unique for the whole service.
+The server service will also manage webhooks for servers. A webhook allows third-party clients to send messages to a channel within a server. Webhooks are linked to specific channels and require authentication. Authentication will be handled using a JWT token generated during webhook creation. The token will include the webhook ID and channel ID, signed with a service-wide secret key.
+
+Below is the channel mapping in Go:
+
+[source,go]
+----
+type Channel struct {
+	ID          string `json:"id"`
+	ServerID    *string `json:"server_id,omitempty"` // Null for direct message channels
+	Name        string `json:"name"`
+	Type        string `json:"type"` // e.g., "text", "conference", "thread", "category"
+	ParentID    *string `json:"parent_id,omitempty"` // Null unless it's a thread or part of a category
+	CreatedAt   time.Time `json:"created_at"`
+	Permissions []PermissionOverwrite `json:"permissions"`
+}
+----
 
 ===== Throttling Mechanism
 
@@ -682,6 +668,12 @@ We will deploy 3 worker nodes per cluster. This will allow us to have a high ava
 
 In order to increase the fault tolerance we will use longhorn to manage the storage of the services. Longhorn is a cloud-native distributed block storage solution for Kubernetes. It allows to the replication of the data across multiple nodes. Also it provides tools to backup the kubernetes volumes and to restore them in case of failure.
 
+The cluster holding the databases will will only be reachable from the cluster holding the services. This will ensure that the databases are not exposed to the internet and are only accessible from the services. It means that we have to setup a virtual lan between the two clusters. This will allow the services to communicate with the databases without exposing them to the internet.
+
+In comparaison the cluster holding the services will be reachable from the internet. This will allow the user to access the web application and the API.
+
+All the configuration above will be deployed using a GitOps approach. This means that all the configuration will be stored in a git repository and then deployed using a CI/CD pipeline. This pipeline will be execute a Terraform script that will deploy the clusters. It will allow to have a reproducible and versioned configuration of the clusters. This will ensure that the clusters are always in a consistent state and that we can easily rollback to a previous version if needed.
+
 ==== Service Mesh Overview
 
 A service mesh is a dedicated infrastructure layer that provides service-to-service communication, observability, and security for microservices applications. It abstracts the network and provides a set of features that simplify the development and operation of microservices.
@@ -719,7 +711,7 @@ Istio simplifies enabling mTLS across all services in the mesh, enhancing securi
 As we will have 2 clusters, one for the services and one for the databases, we will need to deploy Istio in both clusters. Istio manages this case by deploying a control plane in each cluster. It will allow to have the same configuration in both clusters and to manage the traffic between the clusters.
 This deployment style is called multi-primary and therefore all Istio features will be available between the clusters. 
 
-==== Gateway and Securing with TLS
+==== Networking and Security
 
 Istio Gateway is a component that manages inbound and outbound traffic for services in the mesh. It acts as an entry point for external traffic and provides features such as load balancing, routing, and security.
 
@@ -744,6 +736,17 @@ This approach simplifies certificate management while leveraging a trusted CA li
 
 [red]#NOTE: SCHEME OF THE GATEWAY#
 
+The gateway will also have the responsibility to verify the access token of the user. This ensures that only authenticated users can access the services behind the gateway. The verification process will involve the following steps:
+
+1. **Token Extraction**: The gateway will extract the access token from the `Authorization` header of the incoming request.
+2. **Token Validation**: The gateway will validate the token by calling the introspection endpoint of the Keycloak authorization server. This step ensures that the token is valid, not expired, and issued by a trusted source.
+3. **User Information Retrieval**: If the token is valid, the gateway will retrieve user information from the token payload, such as user roles and permissions.
+4. **Request Forwarding**: The gateway will forward the request to the appropriate service, including the user information in the request headers for further processing.
+
+This approach centralizes authentication at the gateway level, simplifying the security model for downstream services.
+
+[red]#NOTE: SEQUENCE DIAGRAM FOR TOKEN VERIFICATION WORKFLOW#
+
 ==== Circuit Breaking
 
 Circuit breaking is a design pattern that prevents cascading failures in distributed systems. 
@@ -751,12 +754,11 @@ It works by monitoring the health of services and breaking the circuit if a serv
 
 In our application, we will use circuit breaking to ensure service reliability and prevent service degradation. 
 By implementing circuit breaking in Istio, we can detect and isolate failing services, preventing them from affecting other services in the mesh.
-
-
 [red]#NOTE: SCHEME CIRCUIT BREAKING#
 
-
 ==== Packaging, deploying services
+
+In order to set up the packaging of services, we should follow the principles of link:https://12factor.net/[12 factors] applications. It will drive us to have a clear separation of concerns between the services and the deployment process.
 
 Each service will be packaged as a Docker image, allowing for easy deployment and scaling. The images will be stored in a private Docker registry to ensure security and control over the deployment process.
 Then the images will be deployed to the Kubernetes cluster using Helm charts. Helm charts will simplify the deployment process by providing a standardized way to package and deploy applications on Kubernetes.
@@ -779,31 +781,16 @@ For example:
 
 By adhering to SemVer, we ensure clear communication of changes and compatibility between versions, which is critical for managing microservices in a distributed architecture.
 
-==== Deploying databases
+In order to easily integrate services between them the container and therefore helm chart should allow to pass configuration values to the service.
+The configuration values will be passed to the service using environment variables. This will allow to easily configure the service without having to modify the code. For example, the service will be able to connect to the database using the following environment variables:
 
-We will deploy databases in a separate Kubernetes cluster to ensure isolation and security. 
-Even though it is often advised to deploy databases on bare metal instances, Kubernetes provides a flexible and scalable environment for managing databases. Futhermore, a lot of tools are available to manage databases in Kubernetes.
-Each database will be deployed using a Kubernetes operator, which simplifies the management and scaling of databases in a Kubernetes environment.
-
-A lot of databases will be used in the application. And they all provide a way kubernetes operator to deploy the database:
-
-- link:https://github.com/mongodb/mongodb-kubernetes-operator/blob/master/README.md[MongoDB Community Operator]
-- link:https://cloudnative-pg.io/[Postgres Operator]
-- link:https://min.io/docs/minio/kubernetes/upstream/operations/installation.html[Minio Operator]
-
-Some services will need some cache. For that we will use the link:https://operatorhub.io/operator/redis-operator[Redis operator].
-
-Each instance of databases will be deployed on it's own kubernetes node.
-
-In order to scale the databases and allow high availability, we will use the following configuration:
-
-- MongoDB: 3 replicas with sharding enabled
-- Postgres: 3 replicas with streaming replication enabled
-- Minio: 3 replicas with erasure coding enabled
-- Redis: 3 replicas with clustering enabled
-
-We will need:
-- Each database 
+```yaml
+env:
+  - name: DATABASE_HOST
+	value: "mongodb://mongo:27017"
+  - name: DATABASE_NAME
+	value: "beep"
+```
 
 ==== ArgoCD
 
@@ -823,14 +810,167 @@ image:
 ```
 
 When a service is updated, a pipeline will be triggered to build the Docker image and push it to the Docker registry. 
-The pipeline will also update the values.yaml file in the Git repository with the new version of the Docker image. As ArgoCD is monitoring the Git repository, it will automatically deploy the updated configuration to the Kubernetes cluster.
+The pipeline will also update the values.yaml file in the Git repository with the new version of the Docker image. As ArgoCD is monitoring the Git repository, it will automatically deploy the updated configuration to the Kubernetes cluster. 
 
+
+==== Deploying databases
+
+We will deploy databases in a separate Kubernetes cluster to ensure isolation and security. 
+Even though it is often advised to deploy databases on bare metal instances, Kubernetes provides a flexible and scalable environment for managing databases. Futhermore, a lot of tools are available to manage databases in Kubernetes.
+Each database will be deployed using a Kubernetes operator, which simplifies the management and scaling of databases in a Kubernetes environment.
+
+A lot of databases will be used in the application. And they all provide a way kubernetes operator to deploy the database:
+
+- link:https://github.com/mongodb/mongodb-kubernetes-operator/blob/master/README.md[MongoDB Community Operator]
+- link:https://cloudnative-pg.io/[Postgres Operator]
+- link:https://min.io/docs/minio/kubernetes/upstream/operations/installation.html[Minio Operator]
+- link:https://operatorhub.io/operator/redis-operator[Redis operator]
+
+Each instance of databases will be deployed on it's own kubernetes node.
+
+In order to scale the databases and allow high availability, we will use the following configuration:
+
+- MongoDB: 3 replicas with sharding enabled
+- Postgres: 3 replicas with streaming replication enabled
+- Minio: 3 replicas with erasure coding enabled
+- Redis: 3 replicas with clustering enabled
+
+For easier management of the infrastructure, Postgres instance will hold multiple databases. Each database will be used by a service. Therefore, the Postgres instance will hold the following databases:
+
+- beep_users
+- beep_server
+- beep_keycloak
+- beep_permify 
+
+MongoDB will hold the data for the messages services and the instance of Minio will be used only to store the data for the file storage service.
+
+In order to ensure the integrity of the data, we will use a backup solution to backup the databases.
+Backups need to be stored in a secure location and should be easily accessible in case of failure. The backups will be stored in a separate S3 bucket serparated from the infrastructure.
+The kind of backup will change depending on the service we want to backup.
+
+== Database Backup Strategy
+
+=== Recovery Point Objective (RPO) and Recovery Time Objective (RTO)
+
+The defined objectives for our microservices architecture are:
+
+- Messages (MongoDB): RPO of 2 hours
+- Critical data (PostgreSQL): RPO of 15 minutes 
+- All services: RTO of 15 minutes
+
+These values are well-aligned with industry standards for similar applications. For context:
+
+* *Chat applications* typically maintain an RPO of 30 minutes to 4 hours for message data, as temporary message loss is usually acceptable compared to user/account data.
+* *Critical user and relationship data* in applications similar to Discord or Slack typically have RPOs of 5-15 minutes to minimize data loss during outages.
+* *RTO of 15 minutes* is aggressive but achievable with proper automation and is appropriate for a real-time communication platform where extended downtime significantly impacts user experience.
+
+
+Incremental backups for MongoDB are indeed possible and well-suited for message data:
+
+MongoDB natively supports incremental backups through its oplog (operations log)
+This approach is ideal for message data that has high write volume but lower criticality
+
+== Technical Continuity Plan
+
+=== Overview and Strategy
+
+The technical continuity plan ensures our microservices architecture can withstand disruptions and recover quickly from technical failures. This approach focuses on infrastructure resilience, automated recovery procedures, and systematic testing.
+
+The plan addresses infrastructure outages, data corruption, and system failures that could affect our application. Through robust recovery mechanisms and defined procedures, we aim to minimize downtime and data loss when technical issues occur.
+
+[red]#NOTE: Add a diagram showing recovery time and recovery point objectives for different system components, with time on the x-axis and illustrating the relationship between the last good backup (RPO) and the time to recovery (RTO).#
+
+=== Potential Threats and Risk Analysis
+
+Our microservices architecture faces several potential threats that could disrupt normal operations:
+
+- **Infrastructure Outages**: Hardware failures, network disruptions, or power outages affecting clusters
+- **Data Corruption**: Database issues from software bugs, hardware failures, or human error
+- **Security Breaches**: Unauthorized access, data theft, or malicious attacks
+- **Resource Exhaustion**: Traffic spikes, DDoS attacks, or resource leaks causing degradation
+- **Configuration Errors**: Misconfigurations during deployments leading to service disruptions
+
+Each threat requires specific mitigation strategies and recovery procedures to minimize downtime.
+
+[red]#NOTE: Add a heat map diagram showing the likelihood vs. impact of different threat types, using color coding to highlight high-risk areas that require priority attention.#
+
+=== Recovery Infrastructure
+
+Our recovery approach leverages the dual-cluster architecture to enable targeted recovery actions. The separation of service and database clusters allows us to recover one cluster independently when the other remains operational.
+
+The technical resilience is built on:
+
+- Infrastructure-as-Code through Terraform for consistent deployment
+- Kubernetes operators managing database replication and recovery
+- Distributed storage with Longhorn providing data replication
+- GitOps deployment with ArgoCD pulling configurations from version control
+- Automated backup systems storing data securely off-cluster
+
+This technical foundation creates a system that can rapidly recover from failures with minimal manual intervention.
+
+[red]#NOTE: Add an architecture diagram showing the recovery infrastructure components, including clusters, backup systems, and recovery paths. Use color coding to distinguish primary and backup components.#
+
+=== Recovery Procedures
+
+Each failure scenario requires specialized technical responses:
+
+**Database Cluster Failure**
+
+When experiencing complete database cluster failure:
+
+1. Monitoring alerts trigger the recovery workflow
+2. A replacement cluster is deployed via Terraform in the backup region
+3. Database restoration proceeds through specialized operators:
+   - PostgreSQL data is recovered using pgBackRest
+   - MongoDB collections are restored from snapshots
+   - Redis instances are rebuilt (being non-persistent by design)
+4. After technical verification, service endpoints are updated via DNS changes
+
+For database corruption scenarios:
+
+1. Write operations are suspended to prevent further data corruption
+2. Point-in-time recovery restores to a known-good state
+3. Automated data integrity checks validate the recovered data
+4. Services resume operations after passing technical validation
+
+[red]#NOTE: Add a flowchart showing the decision tree for different database failure scenarios and the recovery paths for each type of database (PostgreSQL, MongoDB, Redis).#
+
+**Service Cluster Failure**
+
+For service infrastructure outages:
+
+1. A replacement service cluster is provisioned via Terraform
+2. ArgoCD automatically deploys services from Git repositories
+3. Load balancer configurations are updated to route to the new cluster
+4. Technical health checks confirm system readiness
+
+For partial service degradation:
+
+1. Circuit breaking isolates failed components
+2. Stateless services are restarted with appropriate scaling
+3. Stateful services undergo data verification before reactivation
+4. System monitors confirm service restoration
+
+[red]#NOTE: Add a sequence diagram showing the recovery workflow for service cluster failure, including the interactions between monitoring, Terraform, ArgoCD, and DNS services.#
+
+=== Testing and Evolution
+
+To maintain technical reliability, we regularly test our recovery mechanisms:
+
+- Simulated cluster failures test full recovery procedures
+- Database restoration exercises verify backup integrity
+- Controlled chaos engineering identifies resilience gaps
+- Network partition tests validate cross-cluster communication
+
+Each test and actual incident triggers a technical post-mortem to identify improvements. This systematic approach ensures our continuity plan evolves alongside our infrastructure.
+
+Our technical documentation includes detailed procedure runbooks, enabling operations teams to follow precise steps during recovery operations. These procedures are version-controlled alongside the infrastructure code itself.
+
+[red]#NOTE: Add a diagram showing the continuous improvement cycle for the continuity plan, with phases for planning, testing, evaluation, and improvement.#
+
+By treating continuity as a core technical concern rather than an afterthought, we ensure the Beep platform maintains reliability even when facing the inevitable challenges of distributed systems.
 
 === Monitoring
 ==== Alerting
 ==== Logging
 ==== Tracing
-
-=== Backuping
-
-
