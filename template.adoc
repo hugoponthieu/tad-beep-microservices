@@ -652,6 +652,8 @@ Only then all the services in the application will be able to verify requests ag
 All services will be deployed across multiple Kubernetes clusters to improve fault tolerance and ensure high availability. Each service will reside in its own namespace, allowing for independent resource management. 
 The clusters will be deployed on Virtual Machines (VMs) to provide flexibility and scalability. We will use Proxmox VE as the hypervisor to manage the VMs, allowing us to create and manage multiple virtual machines on a single physical server.
 
+
+
 ==== Kubernetes
 
 The entire infrastructure will run on Kubernetes, divided into two clusters: one for services and another for databases. Services will be isolated within their own namespaces to ensure independent resource management and high availability. Helm charts will facilitate deployment by simplifying configuration, packaging, and dependency handling.
@@ -674,6 +676,115 @@ In comparaison the cluster holding the services will be reachable from the inter
 
 All the configuration above will be deployed using a GitOps approach. This means that all the configuration will be stored in a git repository and then deployed using a CI/CD pipeline. This pipeline will be execute a Terraform script that will deploy the clusters. It will allow to have a reproducible and versioned configuration of the clusters. This will ensure that the clusters are always in a consistent state and that we can easily rollback to a previous version if needed.
 
+==== Networking and Zones
+
+==== Network Segregation and Security Zones
+
+The infrastructure leverages Proxmox's Software-Defined Networking (SDN) capabilities to create a secure, segmented network environment. This approach allows us to isolate different components of our architecture and control traffic flow between them using virtual networks and firewall rules.
+
+===== Zone Architecture
+
+Our Proxmox infrastructure is divided into two primary security zones:
+
+1. **Service Zone (DMZ)**: Contains the Kubernetes cluster hosting application services that are accessible from the internet
+2. **Database Zone (Secure Zone)**: Contains the Kubernetes cluster dedicated to database services, with no direct internet exposure
+
+This separation follows the defense-in-depth principle, ensuring that database systems are never directly exposed to external networks. Each zone is implemented as a separate VNET in Proxmox SDN, with dedicated subnets and routing configurations.
+
+.Zone Network Architecture
+[cols="1,2,1,1"]
+|===
+|Zone |Purpose |Network |Internet Access
+
+|Service Zone (DMZ)
+|Hosting user-facing services and APIs
+|10.0.1.0/24
+|Yes (controlled)
+
+|Database Zone
+|Hosting database services and persistence layer
+|10.0.2.0/24
+|No (isolated)
+|===
+
+[red]#NOTE: Add a network topology diagram showing the two zones with their respective VNETs, subnets, and connections through firewalls.#
+
+===== Inter-Zone Traffic Control
+
+Traffic between zones is strictly controlled using Proxmox's firewall capabilities. The following matrix defines the allowed traffic patterns between zones:
+
+.Inter-Zone Traffic Matrix
+[cols="2,2,3"]
+|===
+|Source |Destination |Allowed Traffic
+
+|Service Zone
+|Database Zone
+|- PostgreSQL connections (port 5432)
+- MongoDB connections (port 27017)
+- Redis connections (port 6379)
+- Minio connections (port 9000)
+- DNS resolution (port 53)
+
+|Database Zone
+|Service Zone
+|- Monitoring data (port 9090)
+- Logging data (ports 8125, 24224)
+- DNS resolution (port 53)
+
+|Service Zone
+|Internet
+|- HTTPS (port 443)
+- HTTP (port 80)
+- NTP (port 123)
+- DNS (port 53)
+
+|Database Zone
+|Internet
+|- None (fully isolated)
+|===
+
+All other traffic patterns are explicitly denied, creating a least-privilege network environment where only required communications are permitted.
+
+===== Firewall Implementation
+
+The firewall rules are implemented at multiple levels:
+
+1. **Proxmox SDN Firewall**: Zone-level restrictions controlling traffic between VNETs
+2. **Kubernetes Network Policies**: Pod-level restrictions within each cluster
+3. **Istio Service Mesh**: Service-to-service communication control
+
+[red]#NOTE: Add a diagram showing the firewall architecture with the multiple layers of network security.#
+
+===== Network Path Redundancy
+
+To ensure high availability of network connections between zones, the SDN configuration includes:
+
+1. **Multiple Virtual Bridges**: Each zone has redundant virtual network bridges
+2. **Link Aggregation**: Physical network interfaces are bonded for increased throughput and redundancy
+3. **Automatic Failover**: In case of link failure, traffic is automatically rerouted
+
+===== Cross-Zone Service Discovery
+
+For Kubernetes services to communicate across zones, we implement:
+
+1. **Internal DNS Resolution**: CoreDNS provides service discovery between clusters
+2. **Istio Multi-Cluster Gateway**: Enables secure service mesh across both clusters
+3. **Cross-Cluster Secrets**: Shared TLS certificates for secure authentication
+
+This architecture ensures that while the zones are segregated for security, services can still discover and communicate with each other when explicitly permitted.
+
+===== Benefits of Zone Segregation
+
+The network zone segregation provides several security and operational benefits:
+
+1. **Defense in Depth**: Multiple layers of security controls protect critical database systems
+2. **Reduced Attack Surface**: Database systems have no direct internet exposure
+3. **Blast Radius Containment**: Security incidents in the DMZ cannot easily spread to the Database Zone
+4. **Independent Scaling**: Network resources can be allocated differently based on the needs of each zone
+5. **Simplified Compliance**: Easier to demonstrate security controls for regulated data
+
+By implementing this strict network segregation with granular traffic control, we create a secure foundation for our microservices architecture while maintaining the necessary flexibility for inter-service communication.
 ==== Service Mesh Overview
 
 A service mesh is a dedicated infrastructure layer that provides service-to-service communication, observability, and security for microservices applications. It abstracts the network and provides a set of features that simplify the development and operation of microservices.
