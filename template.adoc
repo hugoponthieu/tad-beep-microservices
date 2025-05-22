@@ -44,7 +44,7 @@ But also on more fine grained authorization level:
 
 And of course there will be more fined grained authorization on resources that we will define along with the capabilities of the user.
 
-==== Account
+=== Account
 
 We will begin like if a user just discovers the application. He will be able to access the application as a guest user.
 
@@ -934,7 +934,7 @@ A lot of databases will be used in the application. And they all provide a way k
 
 - link:https://github.com/mongodb/mongodb-kubernetes-operator/blob/master/README.md[MongoDB Community Operator]
 - link:https://cloudnative-pg.io/[Postgres Operator]
-- link:https://min.io/docs/minio/kubernetes/upstream/operations/installation.html[Minio Operator]
+- link:https://min.io/docs/minio/kubernetes/upstream/operations/installation.html[Redis operator]
 - link:https://operatorhub.io/operator/redis-operator[Redis operator]
 
 Each instance of databases will be deployed on it's own kubernetes node.
@@ -1081,7 +1081,420 @@ Our technical documentation includes detailed procedure runbooks, enabling opera
 
 By treating continuity as a core technical concern rather than an afterthought, we ensure the Beep platform maintains reliability even when facing the inevitable challenges of distributed systems.
 
-=== Monitoring
-==== Alerting
-==== Logging
-==== Tracing
+== Monitoring and Observability
+
+Comprehensive monitoring and observability are critical components of our microservices architecture. This section outlines our approach to collecting, processing, and visualizing telemetry data across the platform. We implement the three pillars of observability—logging, metrics, and distributed tracing—to provide a complete view of system behavior and performance.
+
+Our observability stack is built on the Grafana ecosystem, providing a unified experience for visualization and alerting. The entire stack is deployed using the same infrastructure-as-code principles applied to the rest of our platform, with Terraform scripts, Kubernetes operators, and Helm charts ensuring consistent, reproducible deployments.
+
+[red]#NOTE: Create a high-level architecture diagram showing the complete observability stack and data flows between components.#
+
+=== Observability Best Practices
+
+Maintaining a robust observability implementation requires adherence to several key practices. All services are instrumented in a standardized way, ensuring consistency across metrics, logs, and traces. Service Level Objectives (SLOs) are clearly defined for all user-facing services, providing measurable targets for reliability and performance. To prevent metric overload, we carefully manage label cardinality and enforce guidelines for dashboard creation, ensuring that visualizations remain actionable and efficient. Trace context, request IDs, and user context are propagated consistently throughout the system, enabling seamless correlation across observability signals. Regular testing of alerting pathways and data quality ensures that our observability stack remains reliable and effective.
+
+For developers, we provide a streamlined experience with a simplified local observability stack, standardized instrumentation libraries, and comprehensive documentation. This is complemented by custom debugging tools that help correlate metrics, logs, and traces, as well as runbooks that outline procedures for responding to common alerts and issues.
+
+Looking ahead, we plan to enhance our observability stack with automated anomaly detection using machine learning, continuous profiling for performance optimization, and synthetic monitoring to simulate user journeys. We also aim to deepen the integration of business metrics with technical observability and introduce cost attribution features to break down infrastructure expenses by service and team.
+
+// Logging
+=== Structured Logging
+
+Our logging strategy uses structured JSON logs for efficient parsing and analysis. All application components emit logs in a consistent JSON format with standardized fields:
+
+[source,json]
+----
+{
+	"timestamp": "2023-10-20T14:30:45.123Z",
+	"level": "INFO",
+	"service": "message-service",
+	"trace_id": "ab23cd45ef67gh89",
+	"span_id": "1234567890abcdef",
+	"user_id": "user-123456",
+	"message": "Message successfully processed",
+	"request_id": "req-abcdef123456",
+	"additional_context": {
+		"channel_id": "chan-123456",
+		"message_type": "text"
+	}
+}
+----
+
+==== Log Collection and Processing
+
+We use the native Kubernetes logging pipeline, where container logs are written to standard output and collected by the Kubernetes node agent (kubelet). These logs are then aggregated and sent directly to Grafana Loki using the Promtail agent, which is lightweight and easy to configure.
+
+A minimal Promtail configuration for Kubernetes:
+
+[source,yaml]
+----
+server:
+	http_listen_port: 9080
+	grpc_listen_port: 0
+
+positions:
+	filename: /tmp/positions.yaml
+
+clients:
+	- url: http://loki.observability.svc.cluster.local:3100/loki/api/v1/push
+
+scrape_configs:
+	- job_name: kubernetes-pods
+		kubernetes_sd_configs:
+			- role: pod
+		relabel_configs:
+			- source_labels: [__meta_kubernetes_pod_label_app]
+				target_label: app
+----
+
+==== Log Levels
+
+We standardize log levels across all services:
+
+- **DEBUG**: Detailed diagnostic information for development and troubleshooting
+- **INFO**: General operational events, successful actions, and state changes
+- **WARN**: Unexpected situations that are not errors but may require attention
+- **ERROR**: Failures or issues that require investigation and may impact functionality
+- **FATAL**: Critical errors causing service termination
+
+All services must use these levels consistently to ensure clarity and actionable logs.
+
+==== Authorization and Security Logging
+
+For authorization events, we apply special logging rules:
+
+- **INFO**: Successful authorizations, including user, resource, and decision context
+- **WARN**: Failed authorizations, with relevant context for security review
+- **ERROR**: Repeated or suspicious authorization failures
+
+The authorization service logs:
+- All access decisions with user, resource, and permission context
+- Authentication failures (with limited context to avoid information leakage)
+- Permission and role changes
+
+==== Log Visualization and Analysis
+
+Logs are stored in Grafana Loki, enabling:
+
+- Efficient, indexed storage for fast retrieval
+- LogQL queries for filtering and analysis
+- Correlation with metrics and traces in Grafana dashboards
+
+Dashboards include:
+- Service-level log overviews
+- Authorization/security event monitoring
+- Error rate analysis by service and endpoint
+
+==== Log Retention and Archiving
+
+Log retention policy:
+
+- **Hot Storage**: 7 days for immediate querying
+- **Warm Storage**: 30 days compressed for investigation
+- **Cold Storage**: 180 days archived in S3-compatible storage for compliance and long-term analysis
+
+// Metrics
+=== Metrics Collection
+
+Our metrics implementation provides comprehensive visibility into system performance, resource usage, and business operations. We use Prometheus as our metrics collection backend, with Grafana Mimir providing horizontally scalable long-term storage.
+
+==== System Metrics
+
+We collect detailed metrics from all infrastructure components:
+
+1. **Node-level Metrics**:
+   - CPU usage (total, user, system)
+   - Memory usage (total, available, cached)
+   - Disk usage (capacity, IOPS, latency)
+   - Network throughput and error rates
+   - System load averages
+
+2. **Kubernetes Metrics**:
+   - Pod resource metrics (CPU, memory requests and limits)
+   - Pod status and health
+   - Deployment/StatefulSet status
+   - Node pool capacity and allocation
+   - Scheduler and API server latency
+
+3. **Database Metrics**:
+   - Connection pool utilization
+   - Query performance and error rates
+   - PostgreSQL: WAL generation rate, replication lag
+   - MongoDB: Oplog size and replication status
+   - Redis: Memory fragmentation, keyspace statistics
+   - Storage utilization percentage with predictions
+
+==== Application Metrics
+
+Our services emit detailed metrics about their internal operations and business performance.
+
+1. **General Service Metrics**:
+	- Track request rates, error rates, and response latencies for each endpoint.
+	- Monitor connection pool and thread pool usage, as well as garbage collection statistics.
+
+2. **Business Metrics**:
+	- Measure total active users, server counts, and message throughput.
+	- Analyze API usage patterns and error rates by service and type.
+
+3. **Custom SLI Metrics**:
+	- Calculate API latency percentiles (such as p50, p95, p99) and end-to-end transaction times.
+	- Monitor overall service availability.
+
+All metrics are exposed in a standardized format compatible with Prometheus, using consistent naming conventions across services. This enables unified collection, querying, and visualization of metrics for both operational and business insights.
+
+==== Service Level Objectives (SLOs)
+
+We define and monitor SLOs for all critical services. Each SLO includes:
+
+1. **Service Level Indicators (SLIs)**: Specific metrics that measure service performance
+2. **Targets**: Defined thresholds for acceptable performance
+3. **Error Budgets**: Allowed deviation from perfect service
+4. **Alerting Rules**: Notifications when approaching or exceeding budget burn rates
+
+Example SLO definition for the message service:
+
+- **SLI**: 95th percentile latency for message delivery
+- **Target**: < 500ms for 99.9% of requests in a 30-day window
+- **Error Budget**: 0.1% (43.2 minutes of allowed degraded performance per month)
+- **Alert**: When 2% of error budget is consumed in 1 hour
+
+==== Metrics Storage and Visualization
+
+Metrics are stored in Grafana Mimir, which provides:
+
+1. **Horizontal Scalability**: Distributed storage for metrics data
+2. **Long-term Retention**: Different retention policies based on metric importance
+3. **Multi-tenancy**: Isolation between different components and teams
+4. **High Availability**: Redundant storage to prevent data loss
+
+Grafana dashboards provide visualization of these metrics, with specialized views for:
+
+1. **Executive Overview**: High-level system health and business metrics
+2. **Operator Dashboards**: Detailed infrastructure and service metrics
+3. **Developer Dashboards**: Service-specific performance and debugging views
+4. **SLO Dashboards**: Error budget tracking and historical compliance
+
+[red]#NOTE: Create a mockup dashboard showing key metrics including active users, message throughput, and service health indicators.#
+
+// Tracing
+=== Distributed Tracing
+
+Distributed tracing provides end-to-end visibility into request flows through our microservices architecture. We leverage Istio's built-in tracing capabilities, OpenTelemetry for instrumentation, and Grafana Tempo for trace storage and analysis.
+
+==== Tracing Implementation
+
+Our tracing stack consists of:
+
+1. **Automatic Instrumentation**: Istio injects trace context and generates traces for all service-to-service communication within the mesh.
+2. **Manual Instrumentation**: For critical application paths, we use OpenTelemetry SDKs to add custom spans and attributes.
+3. **Trace Context Propagation**: Trace and span IDs are consistently propagated across HTTP/gRPC boundaries, enabling correlation between logs, metrics, and traces.
+4. **Sampling Strategy**: Adaptive sampling captures 100% of errors and a representative sample of normal traffic.
+
+Example Istio mesh configuration for tracing:
+
+[source,yaml]
+----
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+	meshConfig:
+		enableTracing: true
+		defaultConfig:
+			tracing:
+				zipkin:
+					address: "tempo.observability:9411"
+				sampling: 100.0
+				custom_tags:
+					environment:
+						literal:
+							value: "production"
+----
+
+For enhanced visibility, application code can use OpenTelemetry SDKs (Go, Java, etc.) to manually create spans and propagate trace headers:
+
+[source,go]
+----
+import (
+	"context"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"google.golang.org/grpc/metadata"
+)
+
+func ForwardTraceHeaders(ctx context.Context) context.Context {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = metadata.New(nil)
+	}
+	outCtx := metadata.NewOutgoingContext(ctx, md)
+	return outCtx
+}
+----
+
+Example OpenTelemetry Collector configuration to export traces to Tempo:
+
+[source,yaml]
+----
+apiVersion: v1
+kind: ConfigMap
+metadata:
+	name: otel-collector-config
+	namespace: tracing
+data:
+	otel-collector.yaml: |
+		receivers:
+			otlp:
+				protocols:
+					grpc:
+					http:
+		processors:
+			batch:
+				timeout: 5s
+				send_batch_size: 1024
+		exporters:
+			tempo:
+				endpoint: "tempo:3200"
+		service:
+			pipelines:
+				traces:
+					receivers: [otlp]
+					processors: [batch]
+					exporters: [tempo]
+----
+
+==== Trace Storage and Analysis
+
+Traces are stored in Grafana Tempo, which provides scalable, high-performance storage and integrates seamlessly with Grafana for visualization and analysis. TraceQL enables flexible querying by trace ID, service, operation, or attribute.
+
+Key use cases:
+
+- **Performance Optimization**: Identify bottlenecks in request flows.
+- **Error Investigation**: Trace root causes of failures across services.
+- **Dependency Analysis**: Understand service interactions and dependencies.
+- **User Journey Analysis**: Track end-to-end user interactions.
+
+Example TraceQL queries:
+
+- Retrieve a trace by its trace ID:
+	```
+	{traceID="abc123"}
+	```
+- Find all traces for a specific service:
+	```
+	{service="my-service"}
+	```
+
+[red]#NOTE: Add a sequence diagram showing a sample trace as it flows through multiple services, with annotations for important spans and timing information.#
+
+
+// Alerting
+=== Alerting
+
+Our alerting strategy ensures actionable alerts, clear ownership, and efficient incident response. Grafana Alerting serves as the central system, integrated with Prometheus (metrics) and Loki (logs). Alerts are classified by severity (Critical, Warning, Info) and category (Availability, Latency, Error Rate, Saturation, Security, Business). Ownership and escalation paths are clearly defined, including on-call rotations and escalation procedures.
+
+==== Alert Definition and Classification
+
+Alerts follow a consistent framework:
+
+1. **Severity Levels**:
+	- **Critical**: Immediate action required, service impact
+	- **Warning**: Needs attention soon, potential future impact
+	- **Info**: Notification only, no immediate action required
+
+2. **Categories**:
+	- **Availability**: Service/component unreachable
+	- **Latency**: Response times exceed thresholds
+	- **Error Rate**: Unusual error volume
+	- **Saturation**: Resource constraints
+	- **Security**: Potential incidents
+	- **Business**: Key business metric anomalies
+
+3. **Ownership**:
+	- Responsible team and on-call rotation
+	- Escalation path for unacknowledged alerts
+
+==== Notification Channels
+
+Multi-channel notifications ensure timely response:
+
+- **Email**: All alert levels to responsible teams
+- **Discord**: Real-time alerts via webhooks to dedicated channels
+- **PagerDuty**: Critical alerts trigger on-call notifications
+- **Mobile**: Critical and warning alerts to team devices
+
+Grafana's webhook notifier is configured for Discord, with secure storage of webhook URLs and routing based on severity.
+
+==== Key Alerting Rules
+
+Comprehensive rules include:
+
+- **Infrastructure**: Node CPU/memory/disk >85% for 15m, node not ready for 5m, pod crash loops
+- **Database**: Replication lag >30s, disk usage >80% projected in 24h, connection pool >80%
+- **Application**: Error rate >0.1% for 5m, 95th percentile latency exceeds SLO for 10m, SLO error budget >5% in 1h
+- **Security**: Multiple failed authentications, unusual API access, bursts of authorization failures
+- **Business**: Drop in message throughput, decline in active users, anomaly detection on business metrics
+
+Alerting rules are managed as YAML files and loaded into Prometheus, which continuously evaluates them and sends notifications to configured channels.
+
+==== Alert Suppression and Correlation
+
+To prevent alert fatigue:
+
+- **Grouping**: Related alerts are grouped
+- **Silencing**: Automated during maintenance
+- **Correlation**: Identify common root causes
+- **Intelligent Routing**: Route to appropriate teams
+
+==== Alert Management Best Practices
+
+- **Silencing**: Mute alerts during maintenance or known issues
+- **Escalation**: Automatically escalate unacknowledged alerts
+- **Incident Management**: Integrate with incident tracking tools
+- **Post-Incident Reviews**: Identify improvements after major incidents
+
+
+=== Observability Infrastructure
+
+The observability stack is deployed and managed using the same infrastructure-as-code principles as the rest of our platform.
+
+==== Deployment Architecture
+
+The observability components are deployed across both clusters:
+
+1. **Service Cluster**:
+   - Prometheus instances for scraping service metrics
+   - Fluent Bit DaemonSet for log collection
+   - Istio tracing components
+   - Grafana for visualization (primary instance)
+
+2. **Database Cluster**:
+   - Prometheus instances for database metrics
+   - Fluent Bit for database log collection
+   - Central storage components (Loki, Tempo, Mimir)
+   - Grafana for visualization (replica)
+
+All components are deployed using Helm charts and managed by Terraform scripts. The observability stack is designed to be resilient and scalable, with redundancy across clusters to ensure high availability.
+
+==== Resource Requirements
+
+The observability stack is provisioned with appropriate resources to handle the expected load:
+
+1. **Mimir (Metrics)**:
+   - Storage: 50GB per day retention, compressed
+   - CPU: 8 cores (distributed)
+   - Memory: 32GB (distributed)
+
+2. **Loki (Logs)**:
+   - Storage: 100GB per day retention, compressed
+   - CPU: 8 cores (distributed)
+   - Memory: 32GB (distributed)
+
+3. **Tempo (Traces)**:
+   - Storage: 20GB per day with 7-day retention
+   - CPU: 4 cores (distributed)
+   - Memory: 16GB (distributed)
+
+4. **Grafana**:
+   - CPU: 2 cores
+   - Memory: 4GB
+   - Storage: 10GB for dashboard persistence
