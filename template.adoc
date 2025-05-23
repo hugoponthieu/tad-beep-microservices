@@ -234,17 +234,6 @@ As an administrator I want to:
 
 [red]#NOTE: USE CASE DIAGRAM#
 
-==== Administration
-
-With the affluence of users, the application will need to be managed. The administration of resource will be done by different type of admin.
-This time role will be directly associated to the users.
-
-Roles will be:
-
-- UserModerator
-- ServerModerator
-- ApplicationAdministrator
-
 == Global Architecture
 
 === Presentation 
@@ -259,10 +248,6 @@ image::services/beep-application_diagramme.svg[]
 
 ==== Authentication
 
-link:https://github.com/hugoponthieu/beep-front[Frontend integration of keycloak]
-
-link:https://github.com/hugoponthieu/beep-api[Backend integration of keycloak]
-
 ===== Introduction
 
 Authentication is a critical aspect of any microservices architecture. 
@@ -276,7 +261,6 @@ Keycloak is a suitable choice for our application due to its robust authenticati
 As the user should be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP Keycloak is suited for this task.
 
 The service allow the user to authenticate natively from frontend implementation by exposing the login page of Keycloak. The user will be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP.
-
 
 [red]#NOTE: SCREENSHOT OF THE KEYCLOAK GOOGLE#
 [red]#NOTE: AUTHENTICATION WORKFLOW SEQUENCE DIAGRAM#
@@ -311,27 +295,6 @@ In that case the service will access directly the authorization server to get th
 ===== End-user authentication
 
 The user will be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP.
-
-If the users try to access to the frontend wit
-
-===== Deployment
-
-[red]#NOTE: DEPLOYMENT SCHEME FOR THE KEYCLOAK IN CLUSTER#
-
-
-==== Authorization
-
-Authorization is a critical aspect of any microservices architecture. In this document, we will discuss how to implement role-based access control (RBAC) within servers and global roles in our application. 
-
-===== Roles
-
-Roles in the application are categorized into two types:
-
-- **Global Roles**: Defined at the application level, these roles apply across all services and enforce high-level access control policies (e.g., `admin`, `moderator`, `user`).
-
-- **Server Roles**: Defined at the server level, these roles are specific to individual servers and manage permissions within that context.
-
-Both types of roles will be used to implement fine-grained access control policies.
 
 
 == Implementation
@@ -371,8 +334,6 @@ gRPC's performance advantages, coupled with its robust type safety and support f
 
 In summary, while REST have its merits, gRPC's technical superiority in terms of performance, efficiency, and type safety aligns with the demands of our application, ensuring reliable and scalable inter-service communication.
 
-// GraphQL, another protocol, provides a flexible query language for APIs, allowing clients to request precisely the data they need. 
-// While powerful, GraphQL introduces complexity in terms of query parsing and execution, and may not be as performant as gRPC for certain use cases, particularly those involving high-throughput, low-latency communication.
 
 ==== gRPC
 
@@ -385,11 +346,8 @@ gRPC is a high-performance, open-source RPC framework developed by Google. It us
 - Real-time: Supports two-way streaming, letting clients and servers send multiple messages in real-time.
 - Multi-language: Works with many programming languages, making it easy to build services in different languages.
 
-==== Inter-service communication
-
 image::communication/beep-server-creation.svg[][]
 
-==== Client communication
 
 === Services
 
@@ -424,7 +382,7 @@ type User struct {
 }
 ----
 
-The user service will also be responsible for managing friendships between users. It will handle friend-related operations such as sending, accepting, and rejecting friend requests.
+The user service will also be responsible for managing friendships between users. It will handle friend-related operations such as sending, accepting, and rejeting friend requests.
 When a friendship is created, a channel will be created between the two users. This channel will be a direct message channel, allowing the two users to communicate with each other.
 In order to be friend with a user, the user will need to send a friend request to the other user. The other user will be able to accept or reject the friend request. If the friend request is accepted, a channel will be created between the two users.
 In order to make the friend request, the user will need to know the username of the other user. The username will be unique for each user. The user will be able to search for users by their username.
@@ -457,6 +415,13 @@ This service will also handle writing data to the Permify database. It will be i
 - Banning or kicking members
 - Inviting or removing members from a server
 - Assigning roles within a server
+
+Any user can become a member of a server as soon as he is invited to it. An invitation can be sent by any member of the server. The validity of the invitation can be set to multiple ranges: 
+
+- 1 hour
+- 1 day
+- 1 week
+- Custom
 
 The service will frequently interact with the Permify service to verify if a member is authorized to perform specific actions.
 
@@ -523,6 +488,13 @@ type Channel struct {
 	Permissions []PermissionOverwrite `json:"permissions"`
 }
 ----
+
+Role can also be scope to the application. This means that the role will be applied to all the servers of the application.
+This will allow to have a global role that can be applied to all the servers of the application. This will be useful for example for the application administrator that will need to mana
+
+
+ge all the servers of the application.
+
 
 ===== Throttling Mechanism
 
@@ -650,7 +622,7 @@ Only then all the services in the application will be able to verify requests ag
 === Deployment
 
 All services will be deployed across multiple Kubernetes clusters to improve fault tolerance and ensure high availability. Each service will reside in its own namespace, allowing for independent resource management. 
-The clusters will be deployed on Virtual Machines (VMs) to provide flexibility and scalability. We will use Proxmox VE as the hypervisor to manage the VMs, allowing us to create and manage multiple virtual machines on a single physical server.
+The clusters will be deployed on Virtual Machines (VMs) to provide flexibility and scalability. We will use Proxmox VE as the hypervisor to manage the VMs, allowing us to create and manage mtiple virtual machines on a single physical server.
 
 
 

@@ -1,0 +1,300 @@
+= Beep: Use Case Diagrams
+:description: Use case diagrams for the Beep application
+:toc:
+
+== End-user capabilities
+
+This diagram shows the high-level capabilities of different user types in the system.
+
+[plantuml, target=./diagram/end-user-capabilities, format=png]
+....
+@startuml
+left to right direction
+actor "Guest User" as Guest
+actor "Authenticated User" as User
+actor "User Moderator" as UserMod
+actor "Server Moderator" as ServerMod
+actor "Application Administrator" as Admin
+
+rectangle "Beep Application" {
+  usecase "View Public Content" as UC1
+  usecase "Authenticate" as UC2
+  usecase "Manage Own Profile" as UC3
+  usecase "Interact with Friends" as UC4
+  usecase "Join Servers" as UC5
+  usecase "Participate in Channels" as UC6
+  usecase "Moderate Users" as UC7
+  usecase "Moderate Servers" as UC8
+  usecase "Administer Application" as UC9
+}
+
+Guest --> UC1
+Guest --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+UserMod --> UC7
+UserMod --|> User
+ServerMod --> UC8
+ServerMod --|> User
+Admin --> UC9
+Admin --|> UserMod
+Admin --|> ServerMod
+@enduml
+....
+
+== Account Management
+
+The account management use cases detail how users manage their accounts in the system.
+
+[plantuml, target=./diagram/account-management, format=png]
+....
+@startuml
+left to right direction
+actor "Guest User" as Guest
+actor "Authenticated User" as User
+
+rectangle "Account Management" {
+  usecase "Sign up with Email/Password" as UC1
+  usecase "Sign up with Google" as UC2
+  usecase "Sign up with Polytech" as UC3
+  usecase "Account Validation" as UC4
+  usecase "Sign in" as UC5
+  usecase "Link External Account" as UC6
+  usecase "Change Password" as UC7
+  usecase "Update Profile" as UC8
+  usecase "Change Email" as UC9
+  usecase "Activate Two-Factor Auth" as UC10
+  usecase "Deactivate Two-Factor Auth" as UC11
+  usecase "Delete Account" as UC12
+}
+
+Guest --> UC1
+Guest --> UC2
+Guest --> UC3
+UC1 ..> UC4 : <<include>>
+UC2 ..> UC4 : <<include>>
+UC3 ..> UC4 : <<include>>
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+User --> UC10
+User --> UC11
+User --> UC12
+@enduml
+....
+
+== Social Interaction
+
+This diagram illustrates how users interact socially within the platform.
+
+[plantuml, target=./diagram/social-interaction, format=png]
+....
+@startuml
+left to right direction
+actor "Authenticated User" as User
+
+rectangle "Social Features" {
+  usecase "Send Friend Request" as UC1
+  usecase "List Friend Invitations" as UC2
+  usecase "Accept Friend Request" as UC3
+  usecase "Decline Friend Request" as UC4
+  usecase "Cancel Friend Request" as UC5
+  usecase "List Friends" as UC6
+  usecase "Remove Friend" as UC7
+  usecase "Browse Public Servers" as UC8
+  usecase "Join Public Server" as UC9
+  usecase "List My Servers" as UC10
+  usecase "Leave Server" as UC11
+  usecase "Respond to Server Invitation" as UC12
+  usecase "Search Servers" as UC13
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+User --> UC10
+User --> UC11
+User --> UC12
+User --> UC13
+
+UC1 ..> UC2 : <<extend>>
+UC3 ..> UC2 : <<extend>>
+UC4 ..> UC2 : <<extend>>
+UC5 ..> UC2 : <<extend>>
+UC9 ..> UC8 : <<extend>>
+@enduml
+....
+
+== Chatting
+
+This diagram shows the use cases related to chat functionality.
+
+[plantuml, target=./diagram/chatting, format=png]
+....
+@startuml
+left to right direction
+actor "Authenticated User" as User
+
+rectangle "Chat System" {
+  usecase "Create Channel" as UC1
+  usecase "Delete Channel" as UC2
+  usecase "List My Channels" as UC3
+  usecase "Join Channel" as UC4
+  usecase "Leave Channel" as UC5
+  usecase "Add User to Channel" as UC6
+  usecase "Search Messages" as UC7
+  usecase "Send Message" as UC8
+  usecase "Send File" as UC9
+  usecase "Delete Message" as UC10
+  usecase "Edit Message" as UC11
+  usecase "View Message History" as UC12
+  usecase "Pin Message" as UC13
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+User --> UC10
+User --> UC11
+User --> UC12
+User --> UC13
+
+UC8 <.. UC9 : <<extend>>
+UC12 <.. UC7 : <<extend>>
+@enduml
+....
+
+== Server Management
+
+This diagram shows the roles and capabilities within server management.
+
+[plantuml, target=./diagram/server-management, format=png]
+....
+@startuml
+left to right direction
+actor "Server Member" as Member
+actor "Invitation Manager" as InvMgr
+actor "Member Manager" as MemMgr
+actor "Role Manager" as RoleMgr
+actor "Nickname Manager" as NickMgr
+actor "Nickname Changer" as NickChg
+actor "Channel Manager" as ChanMgr
+actor "Channel Viewer" as ChanView
+actor "Message Sender" as MsgSend
+actor "Message Manager" as MsgMgr
+actor "File Attacher" as FileAtt
+actor "Server Manager" as SrvMgr
+actor "Administrator" as Admin
+
+InvMgr --|> Member
+MemMgr --|> Member
+RoleMgr --|> Member
+NickMgr --|> Member
+NickChg --|> Member
+ChanMgr --|> Member
+ChanView --|> Member
+MsgSend --|> Member
+MsgMgr --|> MsgSend
+FileAtt --|> Member
+SrvMgr --|> ChanMgr
+Admin --|> SrvMgr
+Admin --|> RoleMgr
+Admin --|> MemMgr
+Admin --|> InvMgr
+Admin --|> NickMgr
+Admin --|> MsgMgr
+Admin --|> FileAtt
+
+rectangle "Server Functions" {
+  usecase "Invite User" as UC1
+  usecase "Create Invitation" as UC2
+  usecase "Set Invitation Expiry" as UC3
+  usecase "Add Role to Member" as UC4
+  usecase "Remove Role from Member" as UC5
+  usecase "List Server Members" as UC6
+  usecase "Mute Member" as UC7
+  usecase "Ban Member" as UC8
+  usecase "Kick Member" as UC9
+  usecase "Create Role" as UC10
+  usecase "Update Role" as UC11
+  usecase "Delete Role" as UC12
+  usecase "List Roles" as UC13
+  usecase "Assign Role" as UC14
+  usecase "Update Member Nickname" as UC15
+  usecase "Update Own Nickname" as UC16
+  usecase "Create Channel" as UC17
+  usecase "Update Channel" as UC18
+  usecase "Delete Channel" as UC19
+  usecase "List Channels" as UC20
+  usecase "Set Channel Permissions" as UC21
+  usecase "View Channel Messages" as UC22
+  usecase "Search Channel Messages" as UC23
+  usecase "Send Message" as UC24
+  usecase "Edit Message" as UC25
+  usecase "Delete Message" as UC26
+  usecase "Pin Message" as UC27
+  usecase "Attach File to Message" as UC28
+  usecase "Update Server Settings" as UC29
+  usecase "Delete Server" as UC30
+}
+
+InvMgr --> UC1
+InvMgr --> UC2
+InvMgr --> UC3
+
+MemMgr --> UC4
+MemMgr --> UC5
+MemMgr --> UC6
+MemMgr --> UC7
+MemMgr --> UC8
+MemMgr --> UC9
+
+RoleMgr --> UC10
+RoleMgr --> UC11
+RoleMgr --> UC12
+RoleMgr --> UC13
+RoleMgr --> UC14
+
+NickMgr --> UC15
+NickMgr --> UC16
+
+NickChg --> UC16
+
+ChanMgr --> UC17
+ChanMgr --> UC18
+ChanMgr --> UC19
+ChanMgr --> UC20
+ChanMgr --> UC21
+
+ChanView --> UC20
+ChanView --> UC22
+ChanView --> UC23
+
+MsgSend --> UC24
+MsgSend --> UC25
+
+MsgMgr --> UC26
+MsgMgr --> UC27
+
+FileAtt --> UC28
+
+SrvMgr --> UC29
+SrvMgr --> UC30
+@enduml
+....
