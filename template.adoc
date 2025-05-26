@@ -44,6 +44,9 @@ But also on more fine grained authorization level:
 
 And of course there will be more fined grained authorization on resources that we will define along with the capabilities of the user.
 
+.Use Case Diagram: User Capabilities
+image::diagram/end-user-capabilities.png[width=50%,align="center"]
+
 === Account
 
 We will begin like if a user just discovers the application. He will be able to access the application as a guest user.
@@ -75,7 +78,8 @@ As a user:
 - I want to be able to deactivate Two-Factor Authentication in order to secure my account.
 - I want to be able to delete my account in order to leave the application.
 
-[red]#NOTE: USE CASE DIAGRAM#
+.Use Case Diagram: Account Management
+image::diagram/account-management.png[width=50%,align="center"]
 
 ==== Social
 
@@ -108,7 +112,8 @@ So as a user I want to:
 - be able to answer to a server invitation so I can be a member of a server.
 - browse the servers by their name and description so I can find the communities that I want to join.
 
-[red]#NOTE: USE CASE DIAGRAM#
+.Use Case Diagram: Account Management
+image::diagram/social-interaction.png[width=50%,align="center"]
 
 ==== Chatting
 
@@ -135,7 +140,8 @@ As a user I want to:
 - list the messages of a channel in order to see the history of the channel.
 - to pin messages in a channel to keep them visible for long time.
 
-[red]#NOTE: USE CASE DIAGRAM#
+.Use Case Diagram: Account Management
+image::diagram/social-interaction.png[width=50%,align="center"]
 
 ==== Severs
 
@@ -201,6 +207,9 @@ As a channel manager I want to:
 - list the channels of a server to manage them.
 - restrict permissions of user or role on a channel to control user actions.
 
+.Use Case Diagram: Channel management
+image::diagram/channel-management.png[width=50%,align="center"]
+
 As a channel viewer I want to:
 
 - list the messages of a channel to view the conversation.
@@ -211,6 +220,9 @@ As a message sender I want to:
 
 - send a message in a channel to communicate with other users.
 - update a message to correct it.
+
+.Use Case Diagram: Messaging
+image::diagram/messaging.png[width=50%,align="center"]
 
 As a message manager I want to:
 
@@ -232,74 +244,9 @@ As an administrator I want to:
 
 - perform all actions on the server to manage it effectively.
 
-[red]#NOTE: USE CASE DIAGRAM#
-
-== Global Architecture
-
-=== Presentation 
-
-
-=== Schema
-
-.Overview of the application
-image::services/beep-application_diagramme.svg[]
-
-=== Security
-
-==== Authentication
-
-===== Introduction
-
-Authentication is a critical aspect of any microservices architecture. 
-In this document, we will discuss how to integrate Keycloak for authentication to enforce authentication policies at the gateway level.
-
-===== Keycloak Overview
-
-Keycloak is an open-source identity and access management solution. It provides features such as single sign-on (SSO), user federation, and social login. 
-Keycloak is a suitable choice for our application due to its robust authentication capabilities and ease of integration with microservices.
-
-As the user should be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP Keycloak is suited for this task.
-
-The service allow the user to authenticate natively from frontend implementation by exposing the login page of Keycloak. The user will be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP.
-
-[red]#NOTE: SCREENSHOT OF THE KEYCLOAK GOOGLE#
-[red]#NOTE: AUTHENTICATION WORKFLOW SEQUENCE DIAGRAM#
-
-It will take the responsability to:
-
-- Register new users in the application
-- To issue tokens the user through diverser methods (email, google, LDAP)
-- To check the validity of a token
-
-
-===== OAuth2 Overview
-OAuth2 is an authorization framework that allows applications to securely obtain limited access to user accounts on an HTTP service by delegating authentication to a centralized identity provider, such as Keycloak.
-
-**Authorization Code Flow**: This flow is suitable for applications that can securely store client secrets. It involves exchanging an authorization code for an access token.
-
-
-===== In our architecture
-
-For example if a user wants to access a resource on a service, the service will redirect the user to the authorization server (Keycloak) to authenticate the user. Once the user is authenticated, the server will issue an access token to the user, which can be used to access the resource. This token is short-lived and can be revoked at any time, providing an additional layer of security.
-
-From the access token the user will be able to access the service. To enforce the check of the access token the service will use the introspection endpoint of the authorization server.
-
-[red]#NOTE: SEQUENCE WORKFLOW FOR THE GATEWAY#
-
-We have to note that all service will have an upstream gateway that will check the access token of the user before forwarding the request to the service. This will ensure that only authenticated users can access the services.
-
-Although the user will maybe need to be known by the service, in order to perform some actions. For example, getting the the list of its friends or direct messages.
-In that case the service will access directly the authorization server to get the user information.
-
-
-===== End-user authentication
-
-The user will be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP.
 
 
 == Implementation
-
-=== Deployment
 
 === Networking
 
@@ -307,12 +254,9 @@ Microservices implies some networking constraints such as securing a flow of dat
 
 For that task we will use Istio as a service mesh. It will allow us to manage the networking of the services in a more efficient way.
 
-
 === Protocols
 
 link:https://github.com/hugoponthieu/hello-transport[Poc grpc with rust]
-
-==== Overview of Protocols
 
 Protocols are a fundamental component of microservices architecture, dictating the mechanisms by which services interact and exchange data. 
 This section delves into the technical intricacies of various protocols, including REST, gRPC, and GraphQL, and elucidates the rationale behind selecting gRPC for our application.
@@ -334,7 +278,6 @@ gRPC's performance advantages, coupled with its robust type safety and support f
 
 In summary, while REST have its merits, gRPC's technical superiority in terms of performance, efficiency, and type safety aligns with the demands of our application, ensuring reliable and scalable inter-service communication.
 
-
 ==== gRPC
 
 Remote Procedure Call (RPC) is a protocol that one program can use to request a service from a program located on another computer in a network. It allows a program to execute a procedure (subroutine) in another address space (commonly on another physical machine). The calling program is suspended until the remote procedure returns, and the remote procedure executes in a different address space. RPC abstracts the communication between the client and server, making it appear as if the procedure call is local.
@@ -346,11 +289,44 @@ gRPC is a high-performance, open-source RPC framework developed by Google. It us
 - Real-time: Supports two-way streaming, letting clients and servers send multiple messages in real-time.
 - Multi-language: Works with many programming languages, making it easy to build services in different languages.
 
-image::communication/beep-server-creation.svg[][]
+image::communication/beep-server-creation.svg[]
+
+=== Authentication
+
+==== Keycloak Overview
+
+Keycloak is an open-source identity and access management solution. It provides features such as single sign-on (SSO), user federation, and social login. 
+Keycloak is a suitable choice for our application due to its robust authentication capabilities and ease of integration with microservices.
+
+As the user should be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP Keycloak is suited for this task.
+
+The service allow the user to authenticate natively from frontend implementation by exposing the login page of Keycloak. The user will be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP.
+
+It will take the responsability to:
+
+- Register new users in the application
+- To issue tokens the user through diverser methods (email, google, LDAP)
+- To check the validity of a token
+
+OAuth2 is an authorization framework that allows applications to securely obtain limited access to user accounts on an HTTP service by delegating authentication to a centralized identity provider, such as Keycloak.
+
+**Authorization Code Flow**: This flow is suitable for applications that can securely store client secrets. It involves exchanging an authorization code for an access token.
+
+==== In our architecture
+
+For example if a user wants to access a resource on a service, the service will redirect the user to the authorization server (Keycloak) to authenticate the user. Once the user is authenticated, the server will issue an access token to the user, which can be used to access the resource. This token is short-lived and can be revoked at any time, providing an additional layer of security.
+
+From the access token the user will be able to access the service. To enforce the check of the access token the service will use the introspection endpoint of the authorization server.
+
+We have to note that all service will have an upstream gateway that will check the access token of the user before forwarding the request to the service. This will ensure that only authenticated users can access the services.
+
+Although the user will maybe need to be known by the service, in order to perform some actions. For example, getting the the list of its friends or direct messages.
+In that case the service will access directly the authorization server to get the user information.
+
+The user will be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP.
 
 
 === Services
-
 
 ==== Users 
 
@@ -366,33 +342,15 @@ We will use one keycloak realm for the whole application and create seperate cli
 
 Keycloak will rely on a Postgres database to store the data.
 
-[red]#NOTE: SCHEMA OF THE KEYCLOAK DATABASE#
-
-
-[source,go]
-----
-type User struct {
-	ID        	  	 string
-	Username  	  	 string
-	ProfilePicture   string
-	Email     		 string
-	FirstName 		 string
-	LastName  		 string
-	Password  		 string
-}
-----
-
 The user service will also be responsible for managing friendships between users. It will handle friend-related operations such as sending, accepting, and rejeting friend requests.
 When a friendship is created, a channel will be created between the two users. This channel will be a direct message channel, allowing the two users to communicate with each other.
-In order to be friend with a user, the user will need to send a friend request to the other user. The other user will be able to accept or reject the friend request. If the friend request is accepted, a channel will be created between the two users.
-In order to make the friend request, the user will need to know the username of the other user. The username will be unique for each user. The user will be able to search for users by their username.
+In order to be friend with a user, the user will need to send a friend request to the other user. 
+To make the friend request, the user will need to know the username of the other user. The username will be unique for each user. The user will be able to search for users by their username.
 All user should also be able to ask for another user to be friend by cliking on the user profile, for example in a server.
+You can see the flow of the friend request in the following diagram:
 
-[red]#NOTE: SCHEMA OF THE FRIENDSHIP SYSTEM#
-
-[red]#NOTE: SEQUENCE DIAGRAM FOR FRIEND REQUEST WORKFLOW#
-
-[red]#NOTE: SCHEMA OF THE DIRECT MESSAGE CHANNEL CREATION#
+.Sequence diagram of the friend request flow
+image::diagram/friend-request-flow.png[]
 
 ==== File storage
 
@@ -409,6 +367,7 @@ Each service will have its own path to store the files. The file storage service
 The server service will be responsible for managing servers, members, roles, channels, and webhooks. It will use Postgres to store the data and expose a REST API for server management and a gRPC API for inter-service communication.
 
 This service will also handle writing data to the Permify database. It will be invoked for the following operations involving server members:
+
 - Joining or leaving a server
 - Assigning or removing Server-wide & Application-wide roles
 - Muting or unmuting members
@@ -428,12 +387,14 @@ The service will frequently interact with the Permify service to verify if a mem
 Direct message channels are independent of servers and allow users to communicate without being part of a server. To interact with a direct message channel, users must be members of the channel. All members of a direct message channel have equal permissions, which cannot be modified.
 
 Channels within a server can have the following types:
+
 - **Text Channel**: A basic channel for sending messages.
 - **Conference Channel**: A voice channel where authorized members can communicate.
 - **Thread**: A sub-channel within a text channel, created to discuss specific topics without cluttering the main channel. Threads are tied to a message in a text channel.
 - **Category**: A grouping mechanism for organizing channels within a server.
 
 Authorized members in a server can create roles with various permissions, such as:
+
 - Managing the server
 - Managing roles and assigning them to members
 - Managing channels
@@ -445,6 +406,7 @@ Authorized members in a server can create roles with various permissions, such a
 - Full server access (inherits all permissions)
 
 Permissions can be assigned to roles, and roles can be assigned to server members. Additionally, channel-specific permissions can override server-level permissions for roles or individual members. These channel-specific permissions include:
+
 - Viewing the channel
 - Managing the channel
 - Managing webhooks
@@ -490,17 +452,12 @@ type Channel struct {
 ----
 
 Role can also be scope to the application. This means that the role will be applied to all the servers of the application.
-This will allow to have a global role that can be applied to all the servers of the application. This will be useful for example for the application administrator that will need to mana
-
-
-ge all the servers of the application.
-
+This will allow to have a global role that can be applied to all the servers of the application. This will be useful for example for the application administrator that will need to manage all the servers of the application.
 
 ===== Throttling Mechanism
 
 To prevent abuse on the system and ensure the stability of the server service, a throttling mechanism will be implemented.
 We need to limit users to be part to a maximum of 50 servers. This means a user cannot join more than 50 servers and if he tries to join or create a server, the request will be rejected. 
-
 
 ==== Messages & Search 
 
@@ -539,9 +496,28 @@ type Message struct {
 ----
 
 In the case a user wants to perform a search in one channel, which could be a direct message channel or a server channel, we will only need to filter the messages by the channel id.
+This mockup show a basic flow:
+
+.Mockup of the search messages feature
+image::pictures/search-messages.png[]
+
+First of all a when the input is focused a popover will be displayed to allow the user to filter its search based on mutltiple criteria:
+
+- The user that sent the message
+- Multiple filter on the date
+
+The user can choose several filters or none. If no filter is selected, the search will be performed on all the messages of the channel. Then the user can enter a keyword to search for messages. Those keywords will be used to filter the messages based on the content of the message and the file name of the attachments.
+
+After the service has finish the search, it will return the list of messages that match the criteria. The messages will be displayed in a list with the following information:
+
+- The content of the message
+- The user that sent the message
+- The date of the message
+- Any attachments that are linked to the message
 
 In the case a user wants to perform a search in all the channels of a server, we will need to filter the messages by asking all the channels the user has access to on the server. Therefore, with all the searchable channels, we will be able to only filter the messages by the channel ids. In order to limit the number of calls and queries to the database and to other services, we can cache the list of channels the user has access to on the server inside Redis.
 There are some concerns to have when caching this data inside Redis:
+
 - The data can quickly become stale.
 - The data can be too big to store in Redis.
 
@@ -550,11 +526,7 @@ In fact, the first search request will be slower but should not exceed 1 second.
 
 To address the second concern, we can limit the number of channels that are stored in Redis. We can store only the channels that are used frequently. This will ensure that the data is not too big to store in Redis.
 
-[red]#NOTE: Detail the link to the s3 files#
-
 Also, messages will be able to hold a link to a file to manage the attachments. This URL will only be a link to the file in the subdirectory dedicated to the message service.
-
-[red]#NOTE: Detail the link to the s3 files#
 
 Messages can be also sent by the system to notify the users that something happened in a server or in the channel. Can be sent by any service that is authorized to do so. The message will have as sender the user that perform the action. The types of messages that can be sent are:
 
@@ -565,6 +537,12 @@ Messages can be also sent by the system to notify the users that something happe
 - user joined: a user has joined the channel
 
 This will allow to inform the users of the actions that are performed in the channel.
+
+Message will be created by user in a channel. The message will be stored in the MongoDB database and will be indexed for search. The message will also be sent to the notification service to notify the users of the channel that a new message has been sent.
+
+.Mockup of the search messages feature
+image::diagram/message-flow.png[]
+
 
 ===== Throttling Mechanism
 
@@ -619,12 +597,83 @@ Only then all the services in the application will be able to verify requests ag
 ==== Voice channel communication
 
 
+=== Notification Service
+
+Notifications are a core feature designed to keep users informed about important events and changes within the Beep application. The notification system ensures that users receive timely, relevant, and actionable updates, enhancing engagement and responsiveness.
+
+==== Notification Model
+
+Each notification is scoped to a single user, ensuring privacy and relevance. Notifications are stored in a dedicated database, with each entry including a timestamp, notification type, and a state (read or unread). This structure allows users to easily manage their notifications and prioritize their attention.
+
+.Notification Data Model (Go Example)
+[source,go]
+----
+type NotificationType int
+
+const (
+	MessageReceived NotificationType = iota
+	FriendRequest
+	ServerInvitation
+	// Add more types as needed
+)
+
+type Notification struct {
+	ID         string           `bson:"_id,omitempty"`
+	UserID     string           `bson:"user_id"`
+	Type       NotificationType `bson:"type"`
+	Timestamp  time.Time        `bson:"timestamp"`
+	Payload    interface{}      `bson:"payload"`
+	IsRead     bool             `bson:"is_read"`
+}
+----
+
+==== Notification Workflow
+
+When an event occurs that requires a user's attention—such as receiving a message in a channel, a friend request, or a server invitation—the relevant service (e.g., message, server, or user service) calls the notification service to create a new notification. The notification service is responsible for mapping the event to the appropriate users and storing the notification in the database.
+
+For message notifications, all users with permission to view the channel are notified. The notification service dynamically determines the recipients based on channel membership and permissions.
+
+[NOTE]
+====
+A dynamic mapping is created for each notification type, ensuring that only relevant users receive notifications. This mapping is extensible, allowing new notification types to be added as the application evolves.
+====
+
+==== Notification Retention Policy
+
+To balance user experience and storage efficiency, the following retention policies are enforced:
+
+- **Unread notifications**: Retained for 6 months.
+- **Read notifications**: Retained for 1 month.
+
+Notifications older than these thresholds are automatically purged from the database.
+
+==== Client Interaction
+
+From the client side, notifications are fetched when the user opens the application or navigates to the notifications panel. Users can mark notifications as read or delete them as needed, giving them control over their notification feed.
+
+For real-time updates, users can subscribe to a Server-Sent Events (SSE) socket provided by the notification service. This socket streams notifications as they are created, powered by a watch on the MongoDB database. This ensures that users receive instant updates without needing to refresh the application.
+
+.Example: Real-Time Notification Flow
+image::diagram/notification-flow.png[width=50%,align="center"]
+
+==== Notification Types
+
+Each notification type is represented as an enum in the codebase (see Go example above), allowing for clear and type-safe handling of different scenarios. Typical notification types include:
+
+- **MessageReceived**: Notifies users of new messages in channels they have access to.
+- **FriendRequest**: Alerts users to incoming friend requests.
+- **ServerInvitation**: Informs users of invitations to join new servers.
+
+Additional types can be added as new features are introduced.
+
+==== Service Integration
+
+Other services interact with the notification service via API or gRPC calls to create notifications when relevant events occur. This decoupled architecture ensures that notification logic remains centralized and consistent across the application.
+
 === Deployment
 
 All services will be deployed across multiple Kubernetes clusters to improve fault tolerance and ensure high availability. Each service will reside in its own namespace, allowing for independent resource management. 
 The clusters will be deployed on Virtual Machines (VMs) to provide flexibility and scalability. We will use Proxmox VE as the hypervisor to manage the VMs, allowing us to create and manage mtiple virtual machines on a single physical server.
-
-
 
 ==== Kubernetes
 

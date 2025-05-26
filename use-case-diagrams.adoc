@@ -139,26 +139,21 @@ UC9 ..> UC8 : <<extend>>
 
 This diagram shows the use cases related to chat functionality.
 
-[plantuml, target=./diagram/chatting, format=png]
+=== Channel Management
+
+[plantuml, target=./diagram/channel-management, format=png]
 ....
 @startuml
 left to right direction
 actor "Authenticated User" as User
 
-rectangle "Chat System" {
+rectangle "Channel Management" {
   usecase "Create Channel" as UC1
   usecase "Delete Channel" as UC2
   usecase "List My Channels" as UC3
   usecase "Join Channel" as UC4
   usecase "Leave Channel" as UC5
   usecase "Add User to Channel" as UC6
-  usecase "Search Messages" as UC7
-  usecase "Send Message" as UC8
-  usecase "Send File" as UC9
-  usecase "Delete Message" as UC10
-  usecase "Edit Message" as UC11
-  usecase "View Message History" as UC12
-  usecase "Pin Message" as UC13
 }
 
 User --> UC1
@@ -167,134 +162,316 @@ User --> UC3
 User --> UC4
 User --> UC5
 User --> UC6
-User --> UC7
-User --> UC8
-User --> UC9
-User --> UC10
-User --> UC11
-User --> UC12
-User --> UC13
+@enduml
+....
 
-UC8 <.. UC9 : <<extend>>
-UC12 <.. UC7 : <<extend>>
+=== Messaging
+
+[plantuml, target=./diagram/messaging, format=png]
+....
+@startuml
+left to right direction
+actor "Authenticated User" as User
+
+rectangle "Messaging" {
+  usecase "Send Message" as UC1
+  usecase "Send File" as UC2
+  usecase "Delete Message" as UC3
+  usecase "Edit Message" as UC4
+  usecase "View Message History" as UC5
+  usecase "Pin Message" as UC6
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+
+UC1 <.. UC2 : <<extend>>
+@enduml
+....
+
+=== Search
+
+[plantuml, target=./diagram/chat-search, format=png]
+....
+@startuml
+left to right direction
+actor "Authenticated User" as User
+
+rectangle "Search" {
+  usecase "Search Messages" as UC1
+  usecase "View Message History" as UC2
+}
+
+User --> UC1
+User --> UC2
+
+UC2 <.. UC1 : <<extend>>
 @enduml
 ....
 
 == Server Management
 
-This diagram shows the roles and capabilities within server management.
+This section describes the use cases related to server management within the application.
 
 [plantuml, target=./diagram/server-management, format=png]
 ....
 @startuml
 left to right direction
-actor "Server Member" as Member
-actor "Invitation Manager" as InvMgr
-actor "Member Manager" as MemMgr
-actor "Role Manager" as RoleMgr
-actor "Nickname Manager" as NickMgr
-actor "Nickname Changer" as NickChg
-actor "Channel Manager" as ChanMgr
-actor "Channel Viewer" as ChanView
-actor "Message Sender" as MsgSend
-actor "Message Manager" as MsgMgr
-actor "File Attacher" as FileAtt
-actor "Server Manager" as SrvMgr
-actor "Administrator" as Admin
+actor "Authenticated User" as User
+actor "Server Moderator" as ServerMod
+actor "Application Administrator" as Admin
 
-InvMgr --|> Member
-MemMgr --|> Member
-RoleMgr --|> Member
-NickMgr --|> Member
-NickChg --|> Member
-ChanMgr --|> Member
-ChanView --|> Member
-MsgSend --|> Member
-MsgMgr --|> MsgSend
-FileAtt --|> Member
-SrvMgr --|> ChanMgr
-Admin --|> SrvMgr
-Admin --|> RoleMgr
-Admin --|> MemMgr
-Admin --|> InvMgr
-Admin --|> NickMgr
-Admin --|> MsgMgr
-Admin --|> FileAtt
-
-rectangle "Server Functions" {
-  usecase "Invite User" as UC1
-  usecase "Create Invitation" as UC2
-  usecase "Set Invitation Expiry" as UC3
-  usecase "Add Role to Member" as UC4
-  usecase "Remove Role from Member" as UC5
-  usecase "List Server Members" as UC6
-  usecase "Mute Member" as UC7
-  usecase "Ban Member" as UC8
-  usecase "Kick Member" as UC9
-  usecase "Create Role" as UC10
-  usecase "Update Role" as UC11
-  usecase "Delete Role" as UC12
-  usecase "List Roles" as UC13
-  usecase "Assign Role" as UC14
-  usecase "Update Member Nickname" as UC15
-  usecase "Update Own Nickname" as UC16
-  usecase "Create Channel" as UC17
-  usecase "Update Channel" as UC18
-  usecase "Delete Channel" as UC19
-  usecase "List Channels" as UC20
-  usecase "Set Channel Permissions" as UC21
-  usecase "View Channel Messages" as UC22
-  usecase "Search Channel Messages" as UC23
-  usecase "Send Message" as UC24
-  usecase "Edit Message" as UC25
-  usecase "Delete Message" as UC26
-  usecase "Pin Message" as UC27
-  usecase "Attach File to Message" as UC28
-  usecase "Update Server Settings" as UC29
-  usecase "Delete Server" as UC30
+rectangle "Server Management" {
+  usecase "Create Server" as UC1
+  usecase "Delete Server" as UC2
+  usecase "Update Server Settings" as UC3
+  usecase "List My Servers" as UC4
+  usecase "View Server Details" as UC5
+  usecase "Join Server" as UC6
+  usecase "Leave Server" as UC7
 }
 
-InvMgr --> UC1
-InvMgr --> UC2
-InvMgr --> UC3
-
-MemMgr --> UC4
-MemMgr --> UC5
-MemMgr --> UC6
-MemMgr --> UC7
-MemMgr --> UC8
-MemMgr --> UC9
-
-RoleMgr --> UC10
-RoleMgr --> UC11
-RoleMgr --> UC12
-RoleMgr --> UC13
-RoleMgr --> UC14
-
-NickMgr --> UC15
-NickMgr --> UC16
-
-NickChg --> UC16
-
-ChanMgr --> UC17
-ChanMgr --> UC18
-ChanMgr --> UC19
-ChanMgr --> UC20
-ChanMgr --> UC21
-
-ChanView --> UC20
-ChanView --> UC22
-ChanView --> UC23
-
-MsgSend --> UC24
-MsgSend --> UC25
-
-MsgMgr --> UC26
-MsgMgr --> UC27
-
-FileAtt --> UC28
-
-SrvMgr --> UC29
-SrvMgr --> UC30
+User --> UC1
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+ServerMod --> UC2
+ServerMod --> UC3
+Admin --> UC2
+Admin --> UC3
 @enduml
 ....
+
+== System Architecture Components
+
+This diagram illustrates the microservice components of the Beep platform and their interactions.
+
+[plantuml, target=./diagram/component-diagram, format=png]
+....
+@startuml
+!define RECTANGLE class
+
+skinparam component {
+  BackgroundColor<<Frontend>> #C7E9B0
+  BackgroundColor<<Service>> #B9EDDD
+  BackgroundColor<<Infrastructure>> #87CBB9
+  BackgroundColor<<Database>> #569DAA
+  BorderColor black
+  ArrowColor black
+}
+
+package "Frontend" {
+  [Web Client] <<Frontend>>
+  [Mobile Client] <<Frontend>>
+}
+
+package "API Gateway" {
+  [Istio Gateway] <<Infrastructure>>
+  [Authentication Proxy] <<Infrastructure>>
+}
+
+package "Core Services" {
+  [User Service] <<Service>>
+  [Server Service] <<Service>>
+  [Message Service] <<Service>>
+  [File Storage Service] <<Service>>
+  [Authorization Service] <<Service>>
+}
+
+package "Support Services" {
+  [Voice Service] <<Service>>
+}
+
+package "Databases" {
+  database "PostgreSQL" <<Database>> {
+    [User DB] <<Database>>
+    [Server DB] <<Database>>
+    [Authorization DB] <<Database>>
+  }
+  database "MongoDB" <<Database>> {
+    [Message DB] <<Database>>
+  }
+  database "Minio" <<Database>> {
+    [File Storage] <<Database>>
+  }
+  database "Redis" <<Database>> {
+    [Cache] <<Database>>
+  }
+}
+
+package "Identity & Access" {
+  [Keycloak] <<Infrastructure>>
+}
+
+package "Observability" {
+  [Prometheus] <<Infrastructure>>
+  [Grafana] <<Infrastructure>>
+  [Loki] <<Infrastructure>>
+  [Tempo] <<Infrastructure>>
+}
+
+' Connections between components
+[Web Client] --> [Istio Gateway]
+[Mobile Client] --> [Istio Gateway]
+
+[Istio Gateway] --> [Authentication Proxy]
+[Authentication Proxy] --> [User Service]
+[Authentication Proxy] --> [Server Service]
+[Authentication Proxy] --> [Message Service]
+[Authentication Proxy] --> [File Storage Service]
+[Authentication Proxy] --> [Keycloak]
+
+[User Service] --> [User DB]
+[User Service] --> [Keycloak]
+[User Service] --> [Authorization Service]
+
+[Server Service] --> [Server DB]
+[Server Service] --> [Authorization Service]
+
+[Message Service] --> [Message DB]
+[Message Service] --> [Cache]
+[Message Service] --> [Authorization Service]
+[Message Service] --> [File Storage Service]
+
+[File Storage Service] --> [File Storage]
+
+[Authorization Service] --> [Authorization DB]
+
+[Voice Service] --> [Server Service]
+
+' Add Notification Service
+package "Core Services" {
+  [Notification Service] <<Service>>
+}
+
+' Connect Notification Service to other components
+[User Service] --> [Notification Service]
+[Server Service] --> [Notification Service]
+[Message Service] --> [Notification Service]
+[Notification Service] --> [Cache]
+
+' Simplified observability connections - just one line from each service to observability
+package "Core Services" {
+  [User Service] ..> [Observability] : telemetry
+  [Server Service] ..> [Observability] : telemetry
+  [Message Service] ..> [Observability] : telemetry
+  [File Storage Service] ..> [Observability] : telemetry
+  [Authorization Service] ..> [Observability] : telemetry
+  [Notification Service] ..> [Observability] : telemetry
+}
+
+' Internal observability connections
+[Prometheus] --> [Grafana]
+[Loki] --> [Grafana]
+[Tempo] --> [Grafana]
+
+@enduml
+....
+
+== Data Flow Diagrams
+
+This section contains diagrams illustrating key data flows within the system.
+
+=== Friend Request Workflow
+
+[plantuml, target=./diagram/friend-request-flow, format=png]
+....
+@startuml
+actor "User A" as UserA
+actor "User B" as UserB
+participant "User Service" as UserService
+participant "Server Service" as ServerService
+database "User DB" as UserDB
+database "Server DB" as ServerDB
+
+UserA -> UserService: Send friend request to User B
+UserService -> UserDB: Store friend request
+UserService -> UserB: Notify about friend request
+
+UserB -> UserService: Accept friend request
+UserService -> UserDB: Update friendship status
+UserService -> ServerService: Create direct message channel
+ServerService -> ServerDB: Store new channel
+ServerService -> UserService: Return channel ID
+UserService -> UserA: Notify friend request accepted
+UserService -> UserB: Notify channel created
+
+@enduml
+....
+
+=== Server Creation Workflow
+
+[plantuml, target=./diagram/server-creation-flow, format=png]
+....
+@startuml
+actor "User" as User
+participant "Server Service" as ServerService
+participant "Authorization Service" as AuthService
+database "Server DB" as ServerDB
+database "Auth DB" as AuthDB
+
+User -> ServerService: Create new server
+ServerService -> ServerDB: Store server details
+ServerService -> ServerService: Create default channels
+ServerService -> ServerDB: Store channels
+ServerService -> AuthService: Set creator as admin
+AuthService -> AuthDB: Store permissions
+ServerService -> User: Return server details
+
+@enduml
+....
+
+=== Message Flow
+
+[plantuml, target=./diagram/message-flow, format=png]
+....
+@startuml
+actor "User" as User
+participant "Message Service" as MessageService
+participant "Authorization Service" as AuthService
+participant "File Storage Service" as FileService
+database "Message DB" as MessageDB
+database "Auth DB" as AuthDB
+database "File Storage" as FileDB
+
+User -> MessageService: Send message with attachment
+MessageService -> AuthService: Check permissions
+AuthService -> AuthDB: Verify channel permissions
+AuthService -> MessageService: Permissions granted
+
+alt Has file attachment
+    MessageService -> FileService: Upload file
+    FileService -> FileDB: Store file
+    FileService -> MessageService: Return file URL
+end
+
+MessageService -> MessageDB: Store message
+MessageService -> User: Confirm message sent
+
+@enduml
+....
+
+
+== Notification Flow
+
+[plantuml, target=./diagram/notification-flow, png]
+----
+@startuml
+actor User
+participant "Client App" as Client
+participant "Notification Service" as NS
+participant "MongoDB" as DB
+
+User -> Client : Opens app / subscribes to SSE
+Client -> NS : Establish SSE connection
+NS -> DB : Watch for new notifications
+DB --> NS : New notification event
+NS -> Client : Push notification via SSE
+Client -> User : Display notification
+@enduml
+----
