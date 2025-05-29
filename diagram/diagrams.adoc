@@ -6,7 +6,7 @@
 
 This diagram shows the high-level capabilities of different user types in the system.
 
-[plantuml, target=./diagram/end-user-capabilities, format=png]
+[plantuml, target=./end-user-capabilities, format=png]
 ....
 @startuml
 left to right direction
@@ -48,7 +48,7 @@ Admin --|> ServerMod
 
 The account management use cases detail how users manage their accounts in the system.
 
-[plantuml, target=./diagram/account-management, format=png]
+[plantuml, target=./account-management, format=png]
 ....
 @startuml
 left to right direction
@@ -91,7 +91,7 @@ User --> UC12
 
 This diagram illustrates how users interact socially within the platform.
 
-[plantuml, target=./diagram/social-interaction, format=png]
+[plantuml, target=./social-interaction, format=png]
 ....
 @startuml
 left to right direction
@@ -141,7 +141,7 @@ This diagram shows the use cases related to chat functionality.
 
 === Channel Management
 
-[plantuml, target=./diagram/channel-management, format=png]
+[plantuml, target=./channel-management, format=png]
 ....
 @startuml
 left to right direction
@@ -167,7 +167,7 @@ User --> UC6
 
 === Messaging
 
-[plantuml, target=./diagram/messaging, format=png]
+[plantuml, target=./messaging, format=png]
 ....
 @startuml
 left to right direction
@@ -195,7 +195,7 @@ UC1 <.. UC2 : <<extend>>
 
 === Search
 
-[plantuml, target=./diagram/chat-search, format=png]
+[plantuml, target=./chat-search, format=png]
 ....
 @startuml
 left to right direction
@@ -217,7 +217,7 @@ UC2 <.. UC1 : <<extend>>
 
 This section describes the use cases related to server management within the application.
 
-[plantuml, target=./diagram/server-management, format=png]
+[plantuml, target=./server-management, format=png]
 ....
 @startuml
 left to right direction
@@ -251,7 +251,7 @@ Admin --> UC3
 
 This diagram illustrates the microservice components of the Beep platform and their interactions.
 
-[plantuml, target=./diagram/component-diagram, format=png]
+[plantuml, target=./component-diagram, format=png]
 ....
 @startuml
 !define RECTANGLE class
@@ -379,7 +379,7 @@ This section contains diagrams illustrating key data flows within the system.
 
 === Friend Request Workflow
 
-[plantuml, target=./diagram/friend-request-flow, format=png]
+[plantuml, target=./friend-request-flow, format=png]
 ....
 @startuml
 actor "User A" as UserA
@@ -406,7 +406,7 @@ UserService -> UserB: Notify channel created
 
 === Server Creation Workflow
 
-[plantuml, target=./diagram/server-creation-flow, format=png]
+[plantuml, target=./server-creation-flow, format=png]
 ....
 @startuml
 actor "User" as User
@@ -428,7 +428,7 @@ ServerService -> User: Return server details
 
 === Message Flow
 
-[plantuml, target=./diagram/message-flow, format=png]
+[plantuml, target=./message-flow, format=png]
 ....
 @startuml
 actor "User" as User
@@ -459,7 +459,7 @@ MessageService -> User: Confirm message sent
 
 == Notification Flow
 
-[plantuml, target=./diagram/notification-flow, png]
+[plantuml, target=./notification-flow, png]
 ----
 @startuml
 actor User
@@ -475,3 +475,159 @@ NS -> Client : Push notification via SSE
 Client -> User : Display notification
 @enduml
 ----
+
+== Network Architecture
+
+This diagram illustrates the network architecture of the Beep platform, showing the security zones and traffic flow.
+
+[plantuml, target=./network-architecture, format=png]
+....
+@startuml
+!define FIREWALL [
+skinparam rectangle {
+  BackgroundColor<<external>> #77DD77
+  BackgroundColor<<dmz>> #FFB347
+  BackgroundColor<<secure>> #AEC6CF
+  BorderColor black
+  ArrowColor black
+}
+
+rectangle "Internet" as internet <<external>> {
+  [External Users] as users
+  [External Services] as extservices
+}
+
+rectangle "Service Zone (DMZ) - 10.0.1.0/24" as dmz <<dmz>> {
+  [Istio Gateway] as gateway
+  [Load Balancer] as lb
+  
+  rectangle "Service Cluster" {
+    [Frontend Services] as frontend
+    [API Services] as api
+    [Keycloak] as keycloak
+  }
+}
+
+rectangle "Database Zone (Secure) - 10.0.2.0/24" as secure <<secure>> {
+  rectangle "Database Cluster" {
+    database "PostgreSQL" as postgres
+    database "MongoDB" as mongodb
+    database "Redis" as redis
+    database "Minio" as minio
+  }
+  
+  rectangle "Management" {
+    [Monitoring] as monitoring
+    [Backup Services] as backup
+  }
+}
+
+' External connections
+users --> gateway : "HTTPS (443)"
+extservices --> gateway : "HTTPS (443)"
+
+' DMZ internal connections
+gateway --> lb
+lb --> frontend
+lb --> api
+lb --> keycloak
+
+' Cross-zone connections
+api --> postgres : "5432"
+api --> mongodb : "27017"
+api --> redis : "6379"
+api --> minio : "9000"
+
+' Management connections
+monitoring --> frontend : "Metrics collection"
+monitoring --> api : "Metrics collection"
+monitoring --> postgres : "Metrics collection"
+backup --> postgres : "Backup data"
+backup --> mongodb : "Backup data"
+backup --> minio : "Backup data"
+
+' Network security elements
+cloud "Firewall\n& Network Policies" as firewall1
+cloud "Firewall\n& Network Policies" as firewall2
+
+internet -- firewall1
+firewall1 -- dmz
+dmz -- firewall2
+firewall2 -- secure
+
+note bottom of firewall1
+  Allows only:
+  - HTTPS (443)
+  - HTTP (80) → HTTPS redirect
+end note
+
+note bottom of firewall2
+  Allows only:
+  - DB connections (5432, 27017, 6379, 9000)
+  - Monitoring traffic
+  - No outbound internet access
+end note
+
+@enduml
+....
+
+== Authentication Flow
+
+This diagram illustrates the Keycloak authentication flow in the Beep platform.
+
+[plantuml, target=./keycloak-auth-flow, format=png]
+....
+@startuml
+actor "User" as user
+participant "Frontend\nApplication" as frontend
+participant "Istio Gateway" as gateway
+participant "Keycloak" as keycloak
+participant "User Service" as userservice
+database "User Database" as userdb
+
+title Keycloak Authentication Flow
+
+== Initial Authentication ==
+
+user -> frontend: Access protected resource
+frontend -> user: Redirect to login
+user -> keycloak: Login with credentials
+keycloak -> userdb: Verify credentials
+keycloak -> user: Return authorization code
+user -> frontend: Authorization code
+frontend -> keycloak: Exchange code for tokens
+keycloak -> frontend: Access token + Refresh token
+frontend -> user: Store tokens in browser
+
+== Accessing Protected Resources ==
+
+user -> frontend: Request protected resource
+frontend -> gateway: Request with access token
+gateway -> keycloak: Validate token
+keycloak -> gateway: Token validation result
+alt Valid Token
+    gateway -> userservice: Forward request
+    userservice -> frontend: Resource data
+    frontend -> user: Display resource
+else Invalid Token
+    gateway -> frontend: 401 Unauthorized
+    frontend -> keycloak: Request token refresh
+    keycloak -> frontend: New access token
+    frontend -> gateway: Retry with new token
+end
+
+== Social Login Flow ==
+
+user -> frontend: Click "Login with Google"
+frontend -> keycloak: Redirect to Keycloak Google login
+keycloak -> "Google Identity\nProvider" as google: Redirect to Google
+user -> google: Authenticate with Google
+google -> keycloak: Authentication successful
+keycloak -> userservice: Create/update user if needed
+keycloak -> frontend: Return authorization code
+frontend -> keycloak: Exchange code for tokens
+keycloak -> frontend: Access token + Refresh token
+frontend -> user: Store tokens in browser
+
+@enduml
+....

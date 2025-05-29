@@ -35,17 +35,16 @@ To better design and implement the application, we will need to define the capab
 But also we will be able to define any point of dependency between the services. This will allow us to define potential interactions between the services.
 
 We will try to define the capabilities of the user by making it impersonate different characters. There will be characters based on the authorization level of the user: 
+
 - Guest user: A user that is not authenticated
 - User: A user that is authenticated
 
 But also on more fine grained authorization level:
+
 - UserModerator: A user that can perform some actions on the users
 - ServerModerator: A user that can perform manage the server of the application
 
 And of course there will be more fined grained authorization on resources that we will define along with the capabilities of the user.
-
-.Use Case Diagram: User Capabilities
-image::diagram/end-user-capabilities.png[width=50%,align="center"]
 
 === Account
 
@@ -289,9 +288,11 @@ gRPC is a high-performance, open-source RPC framework developed by Google. It us
 - Real-time: Supports two-way streaming, letting clients and servers send multiple messages in real-time.
 - Multi-language: Works with many programming languages, making it easy to build services in different languages.
 
-image::communication/beep-server-creation.svg[]
 
 === Authentication
+
+Authentication is a critical aspect of any microservices architecture. 
+In this document, we will discuss how to integrate Keycloak for authentication to enforce authentication policies at the gateway level.
 
 ==== Keycloak Overview
 
@@ -301,6 +302,9 @@ Keycloak is a suitable choice for our application due to its robust authenticati
 As the user should be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP Keycloak is suited for this task.
 
 The service allow the user to authenticate natively from frontend implementation by exposing the login page of Keycloak. The user will be able to authenticate with their email and password, with their google account and their Polytech account from an LDAP.
+
+.Keycloak Authentication Flow
+image::diagram/keycloak-auth-flow.png[]
 
 It will take the responsability to:
 
@@ -358,7 +362,6 @@ The file storage service is responsible for managing file uploads and downloads.
 It will expose a REST API for file management and a gRPC API for inter-service communication.
 The file storage service will rely on a Minio server to store the files. Minio is an open-source object storage server that is compatible with Amazon S3. It provides a simple and efficient way to store and retrieve files.
 The file storage service will use the Minio API to manage the files. It will store the files in a Minio bucket and provide a URL for each file that can be used to access it.
-[red]#NOTE: SCHEMA OF THE MINIO DATABASE#
 
 Each service will have its own path to store the files. The file storage service will use a unique prefix for each service to avoid conflicts. For example, the user service will store files in the `user` prefix, while the message service will store files in the `message` prefix.
 
@@ -495,7 +498,7 @@ type Message struct {
 }
 ----
 
-In the case a user wants to perform a search in one channel, which could be a direct message channel or a server channel, we will only need to filter the messages by the channel id.
+In the case a user wants to perform a search in one channel, which could be a direct message channel or a server channel, we will only need to filter the messages by the channel id. 
 This mockup show a basic flow:
 
 .Mockup of the search messages feature
@@ -528,6 +531,9 @@ To address the second concern, we can limit the number of channels that are stor
 
 Also, messages will be able to hold a link to a file to manage the attachments. This URL will only be a link to the file in the subdirectory dedicated to the message service.
 
+.Mockup of the search messages feature
+image::diagram/message-flow.png[]
+
 Messages can be also sent by the system to notify the users that something happened in a server or in the channel. Can be sent by any service that is authorized to do so. The message will have as sender the user that perform the action. The types of messages that can be sent are:
 
 - message: a simple message
@@ -539,9 +545,6 @@ Messages can be also sent by the system to notify the users that something happe
 This will allow to inform the users of the actions that are performed in the channel.
 
 Message will be created by user in a channel. The message will be stored in the MongoDB database and will be indexed for search. The message will also be sent to the notification service to notify the users of the channel that a new message has been sent.
-
-.Mockup of the search messages feature
-image::diagram/message-flow.png[]
 
 
 ===== Throttling Mechanism
@@ -594,14 +597,11 @@ image::security/sequence_auth.png[]
 Other services will need to store the data in the Permify database. This service will be called when the following operation are performed. Therefore permify will be able to enforce the rules on the data.
 Only then all the services in the application will be able to verify requests against the data in the Permify database.
 
-==== Voice channel communication
-
-
-=== Notification Service
+==== Notification Service
 
 Notifications are a core feature designed to keep users informed about important events and changes within the Beep application. The notification system ensures that users receive timely, relevant, and actionable updates, enhancing engagement and responsiveness.
 
-==== Notification Model
+===== Notification Model
 
 Each notification is scoped to a single user, ensuring privacy and relevance. Notifications are stored in a dedicated database, with each entry including a timestamp, notification type, and a state (read or unread). This structure allows users to easily manage their notifications and prioritize their attention.
 
@@ -627,7 +627,7 @@ type Notification struct {
 }
 ----
 
-==== Notification Workflow
+===== Notification Workflow
 
 When an event occurs that requires a user's attention—such as receiving a message in a channel, a friend request, or a server invitation—the relevant service (e.g., message, server, or user service) calls the notification service to create a new notification. The notification service is responsible for mapping the event to the appropriate users and storing the notification in the database.
 
@@ -638,7 +638,7 @@ For message notifications, all users with permission to view the channel are not
 A dynamic mapping is created for each notification type, ensuring that only relevant users receive notifications. This mapping is extensible, allowing new notification types to be added as the application evolves.
 ====
 
-==== Notification Retention Policy
+===== Notification Retention Policy
 
 To balance user experience and storage efficiency, the following retention policies are enforced:
 
@@ -647,7 +647,7 @@ To balance user experience and storage efficiency, the following retention polic
 
 Notifications older than these thresholds are automatically purged from the database.
 
-==== Client Interaction
+===== Client Interaction
 
 From the client side, notifications are fetched when the user opens the application or navigates to the notifications panel. Users can mark notifications as read or delete them as needed, giving them control over their notification feed.
 
@@ -656,7 +656,7 @@ For real-time updates, users can subscribe to a Server-Sent Events (SSE) socket 
 .Example: Real-Time Notification Flow
 image::diagram/notification-flow.png[width=50%,align="center"]
 
-==== Notification Types
+===== Notification Types
 
 Each notification type is represented as an enum in the codebase (see Go example above), allowing for clear and type-safe handling of different scenarios. Typical notification types include:
 
@@ -666,7 +666,7 @@ Each notification type is represented as an enum in the codebase (see Go example
 
 Additional types can be added as new features are introduced.
 
-==== Service Integration
+===== Service Integration
 
 Other services interact with the notification service via API or gRPC calls to create notifications when relevant events occur. This decoupled architecture ensures that notification logic remains centralized and consistent across the application.
 
@@ -712,6 +712,9 @@ Our Proxmox infrastructure is divided into two primary security zones:
 
 This separation follows the defense-in-depth principle, ensuring that database systems are never directly exposed to external networks. Each zone is implemented as a separate VNET in Proxmox SDN, with dedicated subnets and routing configurations.
 
+.Network Architecture Overview
+image::diagram/network-architecture.png[width=90%]
+
 .Zone Network Architecture
 [cols="1,2,1,1"]
 |===
@@ -728,7 +731,6 @@ This separation follows the defense-in-depth principle, ensuring that database s
 |No (isolated)
 |===
 
-[red]#NOTE: Add a network topology diagram showing the two zones with their respective VNETs, subnets, and connections through firewalls.#
 
 ===== Inter-Zone Traffic Control
 
@@ -775,8 +777,6 @@ The firewall rules are implemented at multiple levels:
 2. **Kubernetes Network Policies**: Pod-level restrictions within each cluster
 3. **Istio Service Mesh**: Service-to-service communication control
 
-[red]#NOTE: Add a diagram showing the firewall architecture with the multiple layers of network security.#
-
 ===== Network Path Redundancy
 
 To ensure high availability of network connections between zones, the SDN configuration includes:
@@ -806,6 +806,7 @@ The network zone segregation provides several security and operational benefits:
 5. **Simplified Compliance**: Easier to demonstrate security controls for regulated data
 
 By implementing this strict network segregation with granular traffic control, we create a secure foundation for our microservices architecture while maintaining the necessary flexibility for inter-service communication.
+
 ==== Service Mesh Overview
 
 A service mesh is a dedicated infrastructure layer that provides service-to-service communication, observability, and security for microservices applications. It abstracts the network and provides a set of features that simplify the development and operation of microservices.
@@ -833,11 +834,6 @@ Via proxies Istio is capable to log, trace and monitor natively and seamlessly  
 As describe, Istio will allow us to manage a lot of constraints outside of the services and let the services focus on their core functionalities. 
 It is really suitable to delegate the networking constraints to a dedicated service that will manage them in a more efficient way.
 
-==== mTLS (Mutual TLS)
-
-Mutual TLS (mTLS) is a security protocol that encrypts and authenticates communication between services, ensuring only trusted services can interact. 
-Istio simplifies enabling mTLS across all services in the mesh, enhancing security and preventing unauthorized access.
-
 ==== Deployment kind
 
 As we will have 2 clusters, one for the services and one for the databases, we will need to deploy Istio in both clusters. Istio manages this case by deploying a control plane in each cluster. It will allow to have the same configuration in both clusters and to manage the traffic between the clusters.
@@ -847,26 +843,11 @@ This deployment style is called multi-primary and therefore all Istio features w
 
 Istio Gateway is a component that manages inbound and outbound traffic for services in the mesh. It acts as an entry point for external traffic and provides features such as load balancing, routing, and security.
 
-// Documentation Comment:
-
-// This section explains the integration of Cert-Manager with an external Certificate Authority (CA),
-// such as Let's Encrypt, to automate the issuance and renewal of TLS certificates for Istio Gateway.
-// It highlights how Cert-Manager manages the certificate lifecycle and injects certificates into Istio's ingress gateway,
-// ensuring secure and encrypted communication between clients and services.
-
-// NOTE: [red]#Include a schema here to visually represent the workflow. The schema should illustrate:
-// - Cert-Manager requesting certificates from the external CA (e.g., Let's Encrypt).
-// - Cert-Manager renewing and managing the certificates.
-// - Certificates being injected into Istio's ingress gateway.
-// - Secure communication between clients and services using the certificates.#
-
 In our application, we will use Istio Gateway to manage external traffic and secure communication with clients. To achieve this, we will integrate Cert-Manager with an external Certificate Authority (CA) such as Let's Encrypt to automate the issuance and renewal of TLS certificates.
 
 Cert-Manager will handle the certificate lifecycle, including requesting, renewing, and injecting certificates into Istio's ingress gateway. By configuring Istio Gateway to use these certificates, we can ensure encrypted communication between clients and services, protecting sensitive data from eavesdropping and tampering.
 
 This approach simplifies certificate management while leveraging a trusted CA like Let's Encrypt to provide secure and reliable TLS for our application.
-
-[red]#NOTE: SCHEME OF THE GATEWAY#
 
 The gateway will also have the responsibility to verify the access token of the user. This ensures that only authenticated users can access the services behind the gateway. The verification process will involve the following steps:
 
@@ -877,16 +858,25 @@ The gateway will also have the responsibility to verify the access token of the 
 
 This approach centralizes authentication at the gateway level, simplifying the security model for downstream services.
 
-[red]#NOTE: SEQUENCE DIAGRAM FOR TOKEN VERIFICATION WORKFLOW#
+Mutual TLS (mTLS) is a security protocol that encrypts and authenticates communication between services, ensuring only trusted services can interact. 
+Istio simplifies enabling mTLS across all services in the mesh, enhancing security and preventing unauthorized access.
 
-==== Circuit Breaking
+To concretely implement mTLS with Istio, you can enable strict mTLS mode for your entire mesh or specific namespaces using a PeerAuthentication resource. For example, to enforce mTLS mesh-wide:
 
-Circuit breaking is a design pattern that prevents cascading failures in distributed systems. 
-It works by monitoring the health of services and breaking the circuit if a service becomes unresponsive or slow.
+[source,yaml]
+----
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+	name: default
+	namespace: istio-system
+spec:
+	mtls:
+		mode: STRICT
+----
 
-In our application, we will use circuit breaking to ensure service reliability and prevent service degradation. 
-By implementing circuit breaking in Istio, we can detect and isolate failing services, preventing them from affecting other services in the mesh.
-[red]#NOTE: SCHEME CIRCUIT BREAKING#
+This configuration ensures all service-to-service traffic within the mesh is encrypted and authenticated. Istio automatically manages certificate generation, rotation, and distribution for workloads, so no manual certificate handling is required. You can verify mTLS is active using Istio's dashboard or by inspecting connection metrics.
+
 
 ==== Packaging, deploying services
 
@@ -1010,8 +1000,6 @@ The technical continuity plan ensures our microservices architecture can withsta
 
 The plan addresses infrastructure outages, data corruption, and system failures that could affect our application. Through robust recovery mechanisms and defined procedures, we aim to minimize downtime and data loss when technical issues occur.
 
-[red]#NOTE: Add a diagram showing recovery time and recovery point objectives for different system components, with time on the x-axis and illustrating the relationship between the last good backup (RPO) and the time to recovery (RTO).#
-
 === Potential Threats and Risk Analysis
 
 Our microservices architecture faces several potential threats that could disrupt normal operations:
@@ -1023,8 +1011,6 @@ Our microservices architecture faces several potential threats that could disrup
 - **Configuration Errors**: Misconfigurations during deployments leading to service disruptions
 
 Each threat requires specific mitigation strategies and recovery procedures to minimize downtime.
-
-[red]#NOTE: Add a heat map diagram showing the likelihood vs. impact of different threat types, using color coding to highlight high-risk areas that require priority attention.#
 
 === Recovery Infrastructure
 
@@ -1039,8 +1025,6 @@ The technical resilience is built on:
 - Automated backup systems storing data securely off-cluster
 
 This technical foundation creates a system that can rapidly recover from failures with minimal manual intervention.
-
-[red]#NOTE: Add an architecture diagram showing the recovery infrastructure components, including clusters, backup systems, and recovery paths. Use color coding to distinguish primary and backup components.#
 
 === Recovery Procedures
 
@@ -1065,8 +1049,6 @@ For database corruption scenarios:
 3. Automated data integrity checks validate the recovered data
 4. Services resume operations after passing technical validation
 
-[red]#NOTE: Add a flowchart showing the decision tree for different database failure scenarios and the recovery paths for each type of database (PostgreSQL, MongoDB, Redis).#
-
 **Service Cluster Failure**
 
 For service infrastructure outages:
@@ -1083,7 +1065,6 @@ For partial service degradation:
 3. Stateful services undergo data verification before reactivation
 4. System monitors confirm service restoration
 
-[red]#NOTE: Add a sequence diagram showing the recovery workflow for service cluster failure, including the interactions between monitoring, Terraform, ArgoCD, and DNS services.#
 
 === Testing and Evolution
 
@@ -1098,8 +1079,6 @@ Each test and actual incident triggers a technical post-mortem to identify impro
 
 Our technical documentation includes detailed procedure runbooks, enabling operations teams to follow precise steps during recovery operations. These procedures are version-controlled alongside the infrastructure code itself.
 
-[red]#NOTE: Add a diagram showing the continuous improvement cycle for the continuity plan, with phases for planning, testing, evaluation, and improvement.#
-
 By treating continuity as a core technical concern rather than an afterthought, we ensure the Beep platform maintains reliability even when facing the inevitable challenges of distributed systems.
 
 == Monitoring and Observability
@@ -1108,7 +1087,6 @@ Comprehensive monitoring and observability are critical components of our micros
 
 Our observability stack is built on the Grafana ecosystem, providing a unified experience for visualization and alerting. The entire stack is deployed using the same infrastructure-as-code principles applied to the rest of our platform, with Terraform scripts, Kubernetes operators, and Helm charts ensuring consistent, reproducible deployments.
 
-[red]#NOTE: Create a high-level architecture diagram showing the complete observability stack and data flows between components.#
 
 === Observability Best Practices
 
@@ -1295,8 +1273,6 @@ Grafana dashboards provide visualization of these metrics, with specialized view
 3. **Developer Dashboards**: Service-specific performance and debugging views
 4. **SLO Dashboards**: Error budget tracking and historical compliance
 
-[red]#NOTE: Create a mockup dashboard showing key metrics including active users, message throughput, and service health indicators.#
-
 // Tracing
 === Distributed Tracing
 
@@ -1404,9 +1380,6 @@ Example TraceQL queries:
 	```
 	{service="my-service"}
 	```
-
-[red]#NOTE: Add a sequence diagram showing a sample trace as it flows through multiple services, with annotations for important spans and timing information.#
-
 
 // Alerting
 === Alerting
