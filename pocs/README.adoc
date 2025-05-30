@@ -1,0 +1,10 @@
+== Secured GRPC Server
+
+https://github.com/hugoponthieu/hello-transport
+
+==  Keycloak and message search with mongoDB
+
+This repos are not deployed as the deployment of keycloak keep crashing for whatever reason. Instead see the frontend and backend repos.
+
+https://github.com/hugoponthieu/message-poc
+https://github.com/hugoponthieu/message-beep-poc

@@ -1,6 +1,10 @@
 = Technical documentation of beep
 Technical architecture documentation of beep in order to break down the application into microservices.
 
+You can find the pocs url inside the `pocs` folder.
+You can find the final document at ./tad.pdf
+
+
 == Drafts
 
 Every folder of this repository are some drafts of the application. They are not the final version of the application but they are the first step to build the application.
